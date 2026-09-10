@@ -49,3 +49,5 @@ const MUSIC_TENSION := &"music.tension"
 const STATE_HURT := &"state.hurt"
 const STATE_LOWHEALTH := &"state.lowhealth"
 const STATE_PAUSED := &"state.paused"
+## Clears any active state grade / profile back to neutral.
+const STATE_CLEAR := &"state.clear"

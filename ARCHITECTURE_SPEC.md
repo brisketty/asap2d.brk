@@ -140,15 +140,14 @@ thing.
 - `@export var particle_assets: Dictionary` (`StringName -> Resource`:
   `ParticleProcessMaterial` or `PackedScene`), setter →
   `update_from_particle_assets()`.
-- `@export var shader_assets: Dictionary` (`StringName -> ShaderMaterial`),
-  setter → `update_from_shader_assets()`.
-- `@export var default_sprite: Texture2D`, `default_audio: AudioStream`,
-  `default_particle: Resource`, `default_shader: ShaderMaterial`
-- `resolve_{sprite,audio,particle,shader}_or_null(p_asset_id)` — raw lookup, **no
-  fallback** (the manager applies and logs the fallback so it happens once,
-  centrally).
-- `collect_{sprite,audio,particle,shader}_ids() -> PackedStringArray` — thin
-  wrappers over `collect_ids_of(Dictionary)`, for tooling.
+- `@export var shader_assets` (`-> ShaderMaterial`, world atmosphere) and
+  `@export var post_fx_assets` (`-> ShaderMaterial`, state grades), each with its
+  `update_from_*` setter.
+- `@export var default_{sprite,audio,particle,shader,post_fx}` (typed to match).
+- `resolve_{sprite,audio,particle,shader,post_fx}_or_null(p_asset_id)` — raw
+  lookup, **no fallback** (the manager applies and logs the fallback centrally).
+- `collect_{sprite,audio,particle,shader,post_fx}_ids() -> PackedStringArray` —
+  thin wrappers over `collect_ids_of(Dictionary)`, for tooling.
 
 **Growth (see Cross-cutting).** Each new asset kind adds a parallel
 `<kind>_assets: Dictionary`, `default_<kind>`, `resolve_<kind>_or_null`,
@@ -166,6 +165,7 @@ single choke point for every asset lookup in the framework.
   - `@export var profile_fallback_audio: AudioStream`
   - `@export var profile_fallback_particle: Resource`
   - `@export var profile_fallback_shader: ShaderMaterial`
+  - `@export var profile_fallback_post_fx: ShaderMaterial`
 - `signal active_profile_changed(p_profile_id: StringName)`
 - `var active_profile: ThemeProfile` — setter → `update_from_active_profile()`
   which emits `active_profile_changed` with the new `profile_id` (or `&""`).
@@ -177,10 +177,10 @@ single choke point for every asset lookup in the framework.
 - `resolve_sprite(p_asset_id: StringName) -> Texture2D` — **never null**. Ladder:
   active-profile mapping → active-profile `default_sprite` →
   `profile_fallback_sprite`. `printerr` on each downgrade.
-- `resolve_audio -> AudioStream` / `resolve_particle -> Resource` /
-  `resolve_shader -> ShaderMaterial` — same ladder; the final fallback may be
-  `null` when the project never configures that `profile_fallback_*`.
-- `has_{sprite,audio,particle,shader}(p_asset_id) -> bool` — non-logging
+- `resolve_{audio,particle,shader,post_fx}` — same ladder as `resolve_sprite`;
+  the final fallback may be `null` when the project never configures that
+  `profile_fallback_*`.
+- `has_{sprite,audio,particle,shader,post_fx}(p_asset_id) -> bool` — non-logging
   existence check against the active profile, for `AssetIdScanner`.
 
 Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
@@ -190,9 +190,11 @@ Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 `@tool class_name AssetIdScanner`, `extends RefCounted`. Pure static methods
 (same shape as `BrisklanceSelfUpdater`).
 
-Constants: `{SPRITE,AUDIO,PARTICLE,SHADER}_ID_SUFFIX` (`"_<kind>_asset_id"`),
-`EVENT_ID_SUFFIX := "_event_id"`, `SCENE_EXTENSION := ".tscn"`; kinds
-`{SPRITE,AUDIO,PARTICLE,SHADER,EVENT}_KIND`.
+Constants: `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX}_ID_SUFFIX`
+(`"_<kind>_asset_id"`), `EVENT_ID_SUFFIX := "_event_id"`,
+`SCENE_EXTENSION := ".tscn"`; kinds `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX,EVENT}_KIND`.
+`classify_property` checks `_post_fx_asset_id` before `_shader_asset_id` (both
+end in `_asset_id`).
 
 - `scan_directory(p_root_path: String) -> Array[Dictionary]` — recurse for
   `.tscn`, scan each.
@@ -328,7 +330,7 @@ subsystem. Consumed by any number of subsystems.
 | `camera.*` | `camera.focus`, `camera.zoom`, `camera.shake` | Camera |
 | `ui.*` | `ui.hover`, `ui.confirm`, `ui.cancel`, `ui.notify` | UI/HUD, SFX (dry bus) |
 | `music.*` | `music.theme`, `music.stinger`, `music.tension` | BGM |
-| `state.*` | `state.hurt`, `state.lowhealth`, `state.paused` | Camera (post-FX), Audio Bus, BGM |
+| `state.*` | `state.hurt`, `state.lowhealth`, `state.paused`, `state.clear` | Camera (post-FX), Audio Bus, BGM |
 
 A subsystem PR that introduces an id adds a row here.
 
@@ -339,15 +341,15 @@ A subsystem PR that introduces an id adds a row here.
 | sprite | `_sprite_asset_id` | `sprite_assets` | `Texture2D` | live |
 | audio | `_audio_asset_id` | `audio_assets` | `AudioStream` | live |
 | particle | `_particle_asset_id` | `particle_assets` | `ParticleProcessMaterial` / `PackedScene` (typed `Resource`) | live |
-| shader | `_shader_asset_id` | `shader_assets` | `ShaderMaterial` | live |
+| shader | `_shader_asset_id` | `shader_assets` | `ShaderMaterial` (world atmosphere) | live |
+| post_fx | `_post_fx_asset_id` | `post_fx_assets` | `ShaderMaterial` (state grade) | live |
 | tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | planned (Phase 2 follow-up) |
-| post_fx | `_post_fx_asset_id` | `post_fx_assets` | `Environment` / `Material` | planned (Phase 3) |
 | music | `_music_asset_id` | `music_assets` | `AudioStream` (looped) | planned (Phase 6) |
 | bus_profile | `_bus_profile_asset_id` | `bus_profile_assets` | bus-effect config `Resource` | planned (Phase 7) |
 
 `resolve_sprite` always returns a texture (the `res://icon.svg` engine default).
-`resolve_audio` / `resolve_particle` may return `null` until the project sets
-`profile_fallback_audio` / `profile_fallback_particle`.
+`resolve_audio` / `resolve_particle` / `resolve_shader` / `resolve_post_fx` may
+return `null` until the project sets the matching `profile_fallback_*`.
 
 ---
 
@@ -432,20 +434,43 @@ Autoload `WorldEnvironment2D`, `class_name WorldEnvironment2DSubsystem`
 
 ### C. Camera & Post-Processing Subsystem — `CameraDirector`
 
-Trauma-based shake, dynamic FOV/zoom, chromatic aberration, state-driven
-post-processing profiles.
+Autoload `CameraDirector`, `class_name CameraDirectorSubsystem`
+(`autoloads/camera_director.gd`).  ✅ implemented (Phase 3)
 
-- **Listens:** `camera.*`, `combat.hitstop`, `impact.heavy`/`impact.crit`
-  (auto-trauma), `state.hurt`/`state.lowhealth`/`state.paused` (post-FX profile).
-- **Trauma model:** `add_trauma(p_amount)` accumulator, `trauma^2` → offset/rotation
-  via noise, decays per frame. Events map to trauma amounts through a small
-  `@export` table (designer-tunable, not hardcoded per call site).
-- **Post-FX:** a `WorldEnvironment` (or full-screen `ColorRect` + `ShaderMaterial`)
-  whose `Environment`/material is `ThemeManager.resolve_post_fx(&"state.hurt")`.
-  Cross-faded on state change.
-- **Camera target:** registered by the gameplay camera holder
-  (`set_followed(p_node)`), not discovered.
-- **Prefabs:** `camera_rig` (Camera2D + shake driver + post-FX rect).
+- **Camera target:** `CameraDirector.set_followed(node)` — gameplay registers it;
+  the rig never discovers it. `set_followed(valid)` also `make_current()`s the
+  rig's `Camera2D`.
+- **Listens:**
+  - trauma table (`@export Array[CameraTrauma]`, empty → defaults for
+    `impact.heavy`/`impact.crit`/`combat.hitstop`/`combat.death`) — matched event
+    → `camera_rig.add_trauma(amount)`.
+  - `camera.shake` — `context.magnitude` added as trauma.
+  - `camera.zoom` — `context.magnitude` = zoom factor, tweened.
+  - `camera.focus` — `context.position` present → pan there and hold
+    (`is_focused`); absent → release back to the followed target.
+  - `state.hurt`/`state.lowhealth`/`state.paused` →
+    `camera_rig.set_post_fx(ThemeManager.resolve_post_fx(event_id), …)`;
+    `state.clear` → fade the grade out.
+- **`CameraTranslation`** (`scripts/camera_translation.gd`, autoload-free static):
+  trauma math (`add_trauma` clamp 0–1, `decay_trauma` floor 0,
+  `shake_amount` = trauma², `compute_offset`/`compute_rotation` from noise) +
+  the event→trauma table (`build_lookup`, `build_default_trauma_table`,
+  `resolve_trauma`). Unit-tested headless.
+- **`CameraRig`** (`prefabs/camera_rig.{gd,tscn}`, `extends Node2D`) — a
+  `Camera2D` + `FastNoiseLite`-driven shake in `_process` + a zoom `Tween` +
+  focus `Tween` + a child `ScreenShaderOverlay` for the state grade. Follows the
+  registered node unless focused.
+- **`ScreenShaderOverlay`** gained `fade_to(material, seconds)` (alpha
+  crossfade) alongside the instant `configure()`; both the Camera grade and the
+  World overlay use it.
+- **Post-FX asset kind** (`_post_fx_asset_id`, `post_fx_assets`,
+  `resolve_post_fx`) — separate from `shader` so tooling distinguishes "biome
+  atmosphere" from "damage feedback" art.
+- **Demo:** `scenes/demo_camera.tscn` — wandering player + crit/shake/hurt/clear/
+  zoom buttons; `assets/shaders/hurt_vignette.gdshader` mapped to `state.hurt` in
+  the `complete` profile.
+- **Deferred:** chromatic aberration is available as a shader parameter on the
+  grade material but has no dedicated event yet.
 
 ### D. UI & HUD Polish Subsystem — `HudPolish`
 
@@ -526,12 +551,13 @@ need a per-node reset on reuse should give `pool_scene`'s root a
 
 ### `ThemeProfile` scaling
 
-Live at 4 kinds (sprite/audio/particle/shader) as parallel dictionaries; the
-`collect_*_ids` boilerplate is already deduped through `collect_ids_of`. At ~6+
-kinds, refactor to `@export var asset_tables: Dictionary` (`StringName kind ->
-Dictionary`) + `@export var default_assets: Dictionary` and a generic
-`ThemeManager.resolve(p_kind, p_asset_id) -> Resource`; the typed `resolve_*`
-methods become thin wrappers. Its own task, not folded into a subsystem.
+Live at 5 kinds (sprite/audio/particle/shader/post_fx) as parallel dictionaries;
+`collect_*_ids` is deduped through `collect_ids_of` but the `resolve_*` /
+`has_*` / `resolve_*_or_null` trios are still copy-paste. **Next new kind (6)
+triggers the refactor:** `@export var asset_tables: Dictionary` (`kind ->
+Dictionary`) + `@export var default_assets: Dictionary` + a generic
+`ThemeManager.resolve(p_kind, p_asset_id) -> Resource`, with the typed methods as
+thin wrappers. Its own task, not folded into a subsystem.
 
 ### Event id constants — `EventIds` ✅ implemented
 

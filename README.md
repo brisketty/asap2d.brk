@@ -96,5 +96,8 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
 - **World & Environment** (`WorldEnvironment2D`) — ✅ biome-driven parallax rig,
   ambient particle layer, full-screen shader overlay; switches the active
   `ThemeProfile` per biome. Demo: `scenes/demo_world.tscn`.
-- Camera & Post-Processing · UI & HUD Polish · Polyphonic Audio (SFX) ·
-  BGM & Ambience · Audio Bus / Mixing — planned (see `REMAINING_TASKS.md`).
+- **Camera & Post-Processing** (`CameraDirector`) — ✅ trauma-based screen shake,
+  zoom/focus tweens, state-driven post-FX grades (hurt vignette). Owns the
+  `Camera2D`; gameplay calls `set_followed(node)`. Demo: `scenes/demo_camera.tscn`.
+- UI & HUD Polish · Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing
+  — planned (see `REMAINING_TASKS.md`).

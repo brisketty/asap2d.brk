@@ -153,24 +153,35 @@ Spec: §B. Depends on: `resolve_particle`, `resolve_shader`. **✅ complete**
 
 ## Phase 3 — Camera & Post-Processing Subsystem (`CameraDirector`)
 
-Spec: §C. Depends on: `resolve_post_fx`.
+Spec: §C. Depends on: `resolve_post_fx`. **✅ complete** (8 suites / 94 checks
+green; editor import clean; demo + camera runtime smoke pass).
 
-- [ ] `ThemeManager.resolve_post_fx` + `has_post_fx`; scanner `POST_FX_ID_SUFFIX`.
-- [ ] `autoloads/camera_director.gd` — `set_followed(p_node)` registration;
-  listen `camera.*`, `combat.hitstop`, `impact.heavy`/`impact.crit`, `state.*`.
-- [ ] Trauma model: `add_trauma(p_amount)` accumulator, `trauma^2` → noise-driven
-  offset/rotation, per-frame decay; `@export` decay rate, max offset, max roll.
-- [ ] `@export` event→trauma table (no per-call-site constants).
-- [ ] Dynamic zoom/FOV: `focus(p_rect)` / `zoom_to(p_factor, p_seconds)` via
-  `Tween`; restore on `camera.focus` clear.
-- [ ] `prefabs/camera_rig.{gd,tscn}` — `Camera2D` + shake driver +
-  post-FX `CanvasLayer`/`ColorRect`.
-- [ ] Post-FX profiles: cross-fade `Environment`/`ShaderMaterial` from
-  `resolve_post_fx(state_id)` on `state.hurt`/`state.lowhealth`/`state.paused`;
-  chromatic aberration as a shader param.
-- [ ] Register autoload; `scenes/demo_camera.tscn`;
-  `tests/test_camera_director.gd` (trauma accumulation/decay/clamp; event→trauma
-  mapping; state→post-fx id resolution).
+- [x] `post_fx` asset kind end to end — `ThemeProfile.post_fx_assets` +
+  `default_post_fx` + `resolve_post_fx_or_null` + `collect_post_fx_ids`;
+  `ThemeManager.resolve_post_fx` / `has_post_fx` / `profile_fallback_post_fx`;
+  scanner `POST_FX_ID_SUFFIX` / `POST_FX_KIND` (checked before `shader`).
+- [x] `autoloads/camera_director.gd` — `CameraDirectorSubsystem` / autoload
+  `CameraDirector`; `set_followed(node)`; dispatch trauma table + `camera.shake`
+  / `camera.zoom` / `camera.focus` + `state.{hurt,lowhealth,paused,clear}`.
+  `EventIds.STATE_CLEAR` added.
+- [x] `scripts/camera_trauma.gd` (`CameraTrauma` resource) +
+  `scripts/camera_translation.gd` (`CameraTranslation`, autoload-free static:
+  trauma math + event→trauma table, default table).
+- [x] `prefabs/camera_rig.{gd,tscn}` — `CameraRig extends Node2D`: `Camera2D` +
+  `FastNoiseLite` shake in `_process` + zoom `Tween` + focus `Tween` + child
+  `ScreenShaderOverlay`. Follows registered node unless focused.
+- [x] `ScreenShaderOverlay.fade_to(material, seconds)` — alpha crossfade for the
+  state grade (World overlay also benefits).
+- [x] Register autoload; `scenes/demo_camera.{gd,tscn}` (wandering player,
+  crit/shake/hurt/clear/zoom buttons, `hurt_vignette.gdshader` in the `complete`
+  profile); `tests/test_camera_director.gd` (15 checks).
+
+### Phase 3 follow-ups
+
+- [ ] Chromatic aberration — the grade shader exposes it as a uniform but there
+  is no dedicated event/parameter driving it yet.
+- [ ] `camera.focus` currently pans to a point; a `focus(rect)` that also frames
+  (zoom-to-fit) is unimplemented.
 
 ---
 
@@ -272,6 +283,22 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 3: Camera & Post-Processing
+
+`CameraDirector` autoload + `CameraTranslation` (pure trauma math + table) +
+`CameraTrauma`; `CameraRig` prefab (shake / zoom / focus / post-FX overlay);
+`post_fx` asset kind; `ScreenShaderOverlay.fade_to`; `demo_camera` +
+`hurt_vignette.gdshader`; `test_camera_director` (15). 8 suites / 94 checks.
+Smoke: follow → crit/shake trauma → hurt grade fades in → zoom tween → clear
+fades out → trauma decays to 0.
+
+- `post_fx` is a distinct kind from `shader` (own suffix, own namespace) so the
+  artist worklist separates biome atmosphere from damage-state art. 5 kinds now;
+  the 6th triggers the generic `resolve(kind, id)` refactor.
+- `CameraRig` is created by the autoload and owns the `Camera2D`; gameplay
+  registers the follow target via `set_followed`, matching the "no node
+  discovery" rule.
 
 ### 2026-09-10 — Phase 2: World & Environment
 

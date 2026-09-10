@@ -25,6 +25,7 @@ EventBus="*res://autoloads/event_bus.gd"
 ThemeManager="*res://autoloads/theme_manager.gd"
 ImpactVfx="*res://autoloads/impact_vfx.gd"
 WorldEnvironment2D="*res://autoloads/world_environment_2d.gd"
+CameraDirector="*res://autoloads/camera_director.gd"
 
 [editor_plugins]
 

@@ -19,6 +19,9 @@ signal active_profile_changed(p_profile_id: StringName)
 ## Last-resort shader material when the active ThemeProfile has no
 ## `default_shader`.
 @export var profile_fallback_shader: ShaderMaterial
+## Last-resort state-grade material when the active ThemeProfile has no
+## `default_post_fx`.
+@export var profile_fallback_post_fx: ShaderMaterial
 
 var active_profile: ThemeProfile:
 	set(p_value):
@@ -111,6 +114,20 @@ func resolve_shader(p_asset_id: StringName) -> ShaderMaterial:
 	return profile_fallback_shader
 
 
+## May return null: no default post-fx grade is configured out of the box.
+func resolve_post_fx(p_asset_id: StringName) -> ShaderMaterial:
+	if Utility.is_object_valid(active_profile):
+		var found := active_profile.resolve_post_fx_or_null(p_asset_id)
+		if Utility.is_object_valid(found):
+			return found
+		var profile_default := active_profile.default_post_fx
+		if Utility.is_object_valid(profile_default):
+			printerr("ThemeManager: post-fx '%s' missing, using profile default." % p_asset_id)
+			return profile_default
+	printerr("ThemeManager: post-fx '%s' missing, using engine fallback." % p_asset_id)
+	return profile_fallback_post_fx
+
+
 ## Non-logging existence check across the active profile, for tooling.
 func has_sprite(p_asset_id: StringName) -> bool:
 	if not Utility.is_object_valid(active_profile):
@@ -134,3 +151,9 @@ func has_shader(p_asset_id: StringName) -> bool:
 	if not Utility.is_object_valid(active_profile):
 		return false
 	return Utility.is_object_valid(active_profile.resolve_shader_or_null(p_asset_id))
+
+
+func has_post_fx(p_asset_id: StringName) -> bool:
+	if not Utility.is_object_valid(active_profile):
+		return false
+	return Utility.is_object_valid(active_profile.resolve_post_fx_or_null(p_asset_id))

@@ -11,6 +11,7 @@ const SPRITE_ID_SUFFIX := "_sprite_asset_id"
 const AUDIO_ID_SUFFIX := "_audio_asset_id"
 const PARTICLE_ID_SUFFIX := "_particle_asset_id"
 const SHADER_ID_SUFFIX := "_shader_asset_id"
+const POST_FX_ID_SUFFIX := "_post_fx_asset_id"
 const EVENT_ID_SUFFIX := "_event_id"
 const SCENE_EXTENSION := ".tscn"
 
@@ -18,6 +19,7 @@ const SPRITE_KIND := &"sprite"
 const AUDIO_KIND := &"audio"
 const PARTICLE_KIND := &"particle"
 const SHADER_KIND := &"shader"
+const POST_FX_KIND := &"post_fx"
 const EVENT_KIND := &"event"
 
 
@@ -96,6 +98,8 @@ static func classify_property(p_property_name: String) -> StringName:
 		return AUDIO_KIND
 	if p_property_name.ends_with(PARTICLE_ID_SUFFIX):
 		return PARTICLE_KIND
+	if p_property_name.ends_with(POST_FX_ID_SUFFIX):
+		return POST_FX_KIND
 	if p_property_name.ends_with(SHADER_ID_SUFFIX):
 		return SHADER_KIND
 	if p_property_name.ends_with(EVENT_ID_SUFFIX):
@@ -151,6 +155,8 @@ static func is_reference_mapped(p_kind: StringName, p_asset_id: StringName, p_th
 		return p_theme_manager.has_particle(p_asset_id)
 	if p_kind == SHADER_KIND:
 		return p_theme_manager.has_shader(p_asset_id)
+	if p_kind == POST_FX_KIND:
+		return p_theme_manager.has_post_fx(p_asset_id)
 	return false
 
 
