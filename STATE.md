@@ -46,6 +46,9 @@ document — update it when reality changes.
   `ThemeManager` fallback export + `resolve_`/`has_` (2 lines each via
   `resolve_with_ladder`); scanner `SUFFIX`/`KIND` + 2 branches. Dict-of-dicts
   idea **rejected** (inspector clarity).
+- **Merged to `main`** (`a3f6d1b`, `--no-ff` — the 11 feature commits are kept in
+  history). `framework/foundation` still exists locally; delete it when ready.
+  Not yet pushed to `origin`.
 - **The 7 subsystems + tooling are done** (CI, `CONTRIBUTING.md`,
   `lint_conventions.gd`, scanner walks `.tres`/nested resources). What's left is
   optional polish — the per-phase follow-ups in `REMAINING_TASKS.md` and the
