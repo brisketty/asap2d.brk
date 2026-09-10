@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/demo_music.gd" id="1"]
 
-[node name="MusicDemo" type="Node2D" node_paths=PackedStringArray("node_forest_button", "node_cave_button", "node_tension_slider", "node_stinger_button", "node_forest_ambience_button", "node_stop_ambience_button")]
+[node name="MusicDemo" type="Node2D" node_paths=PackedStringArray("node_forest_button", "node_cave_button", "node_tension_slider", "node_stinger_button", "node_forest_ambience_button", "node_stop_ambience_button", "node_lowhealth_button", "node_state_clear_button")]
 script = ExtResource("1")
 node_forest_button = NodePath("Ui/VBox/ForestButton")
 node_cave_button = NodePath("Ui/VBox/CaveButton")
@@ -10,14 +10,16 @@ node_tension_slider = NodePath("Ui/VBox/TensionSlider")
 node_stinger_button = NodePath("Ui/VBox/StingerButton")
 node_forest_ambience_button = NodePath("Ui/VBox/ForestAmbienceButton")
 node_stop_ambience_button = NodePath("Ui/VBox/StopAmbienceButton")
+node_lowhealth_button = NodePath("Ui/VBox/LowHealthButton")
+node_state_clear_button = NodePath("Ui/VBox/StateClearButton")
 
 [node name="Ui" type="CanvasLayer" parent="."]
 
 [node name="VBox" type="VBoxContainer" parent="Ui"]
 offset_left = 8.0
 offset_top = 8.0
-offset_right = 260.0
-offset_bottom = 240.0
+offset_right = 280.0
+offset_bottom = 340.0
 
 [node name="ForestButton" type="Button" parent="Ui/VBox"]
 text = "music.theme: forest"
@@ -41,3 +43,9 @@ text = "biome.entered: forest (ambience)"
 
 [node name="StopAmbienceButton" type="Button" parent="Ui/VBox"]
 text = "biome.exited"
+
+[node name="LowHealthButton" type="Button" parent="Ui/VBox"]
+text = "state.lowhealth (tension floor)"
+
+[node name="StateClearButton" type="Button" parent="Ui/VBox"]
+text = "state.clear"

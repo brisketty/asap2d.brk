@@ -19,13 +19,16 @@ const MIX_TWEEN_SECONDS := 1.5
 
 var sfx_reverb: AudioEffectReverb
 var active_profile_id: StringName = &"neutral"
+## The biome's profile, restored when a transient `state.*` grade clears.
+var biome_profile: BusProfile
 var mix_tween: Tween
 
 
 func _ready() -> void:
+	biome_profile = AudioMixingTranslation.neutral_profile()
 	install_sfx_reverb()
 	EventBus.semantic_event_emitted.connect(handle_semantic_event_emitted)
-	apply_bus_profile(AudioMixingTranslation.neutral_profile())
+	apply_bus_profile(biome_profile)
 
 
 func install_sfx_reverb() -> void:
@@ -44,18 +47,28 @@ func install_sfx_reverb() -> void:
 
 
 func handle_semantic_event_emitted(p_event_id: StringName, p_context: Dictionary) -> void:
-	if p_event_id == EventIds.BIOME_EXITED:
-		apply_bus_profile(AudioMixingTranslation.neutral_profile())
-		return
-	if p_event_id != EventIds.BIOME_ENTERED:
-		return
-	var biome_id: StringName = p_context.get(Utility.CONTEXT_SOURCE_ID_KEY, &"")
-	if biome_id == &"":
-		return
-	var profile := ThemeManager.resolve_bus_profile(biome_id)
-	if not Utility.is_object_valid(profile):
-		profile = AudioMixingTranslation.neutral_profile()
-	apply_bus_profile(profile)
+	match p_event_id:
+		EventIds.BIOME_ENTERED:
+			var biome_id: StringName = p_context.get(Utility.CONTEXT_SOURCE_ID_KEY, &"")
+			if biome_id == &"":
+				return
+			biome_profile = resolve_profile_or_neutral(biome_id)
+			apply_bus_profile(biome_profile)
+		EventIds.BIOME_EXITED:
+			biome_profile = AudioMixingTranslation.neutral_profile()
+			apply_bus_profile(biome_profile)
+		EventIds.STATE_HURT, EventIds.STATE_LOWHEALTH, EventIds.STATE_PAUSED:
+			# A transient grade over the biome - biome_profile is not overwritten.
+			apply_bus_profile(resolve_profile_or_neutral(p_event_id))
+		EventIds.STATE_CLEAR:
+			apply_bus_profile(biome_profile)
+
+
+func resolve_profile_or_neutral(p_profile_id: StringName) -> BusProfile:
+	var profile := ThemeManager.resolve_bus_profile(p_profile_id)
+	if Utility.is_object_valid(profile):
+		return profile
+	return AudioMixingTranslation.neutral_profile()
 
 
 func apply_bus_profile(p_profile: BusProfile) -> void:

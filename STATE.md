@@ -34,26 +34,26 @@ document — update it when reality changes.
 
 ## Current state (2026-09-10)
 
-- **Framework complete — Phases 0–7 done and green.** 12 test suites / 160
-  checks; editor import clean; 8 demos + `run_asset_scan` + per-subsystem runtime
-  smokes run headless with no errors.
-- **Committed on branch `framework/foundation`** (not `main`), 9 commits:
-  `5d8d11a`=P0, `9b13050`=P1, `619dade`=P2, `b8d75e9`=P3, `0258ef1`=P4,
-  `24c76af`=P5, `9761509`=music kind/refactor, `56f899f`=P6. Phase 7 not yet
-  committed.
-- Asset kinds live: sprite, audio, particle, shader, post_fx, music, bus_profile
-  (7). Adding a kind: `ThemeProfile` export trio + `resolve_/collect_/update_from_`;
-  `ThemeManager` fallback export + `resolve_`/`has_` (2 lines each via
-  `resolve_with_ladder`); scanner `SUFFIX`/`KIND` + 2 branches. Dict-of-dicts
-  idea **rejected** (inspector clarity).
-- **Merged to `main`** (`a3f6d1b`, `--no-ff` — the 11 feature commits are kept in
-  history). `framework/foundation` still exists locally; delete it when ready.
-  Not yet pushed to `origin`.
-- **The 7 subsystems + tooling are done** (CI, `CONTRIBUTING.md`,
-  `lint_conventions.gd`, scanner walks `.tres`/nested resources). What's left is
-  optional polish — the per-phase follow-ups in `REMAINING_TASKS.md` and the
-  "Cross-cutting / later" list (per-biome sub-profiles, `Presentation` umbrella
-  autoload if the 9 autoloads get awkward, real game content). No framework work
+- **Framework complete — Phases 0–7 + tooling, done and green.** 12 test suites /
+  170 checks; editor import clean; 8 demos + `run_asset_scan` + `lint_conventions`
+  + per-subsystem runtime smokes all run headless with no errors.
+- **Merged to `main` and pushed to `origin`** (`--no-ff` merge `a3f6d1b`; the
+  feature commits are kept in history). `framework/foundation` still exists
+  locally — delete it when ready (`git branch -d framework/foundation`).
+- Asset kinds live (7): sprite, audio, particle, shader, post_fx, music,
+  bus_profile. Adding a kind: `ThemeProfile` export trio +
+  `resolve_/collect_/update_from_`; `ThemeManager` fallback export +
+  `resolve_`/`has_` (2 lines each via `resolve_with_ladder`); scanner
+  `SUFFIX`/`KIND` + 2 branches. Dict-of-dicts idea **rejected** (inspector
+  clarity).
+- `state.*` (`hurt`/`lowhealth`/`paused`/`clear`) is wired into Camera (post-FX
+  grade), MusicDirector (intensity floor) and AudioMixing (transient bus grade
+  over the biome).
+- **Tooling done** (CI, `CONTRIBUTING.md`, `lint_conventions.gd`, scanner walks
+  `.tres`/nested resources). What's left is optional polish — the per-phase
+  follow-ups in `REMAINING_TASKS.md` and the "Cross-cutting / later" list
+  (per-biome sub-profiles, `Presentation` umbrella autoload if the 9 autoloads
+  get awkward, real game content). No framework work
   remains.
 
 ## How to run

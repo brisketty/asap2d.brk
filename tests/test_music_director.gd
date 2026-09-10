@@ -38,6 +38,19 @@ func _initialize() -> void:
 	failure_count += expect_true("lower stems are never quieter than higher ones",
 		MusicTranslation.stem_volume_db(0, 0.5, 4, -40.0) >= MusicTranslation.stem_volume_db(2, 0.5, 4, -40.0))
 
+	# --- state intensity floor ---
+	failure_count += expect_true("effective intensity is the louder of the two",
+		is_equal_approx(MusicTranslation.effective_intensity(0.3, 0.8), 0.8))
+	failure_count += expect_true("tension wins when it is higher",
+		is_equal_approx(MusicTranslation.effective_intensity(0.9, 0.5), 0.9))
+	failure_count += expect_true("effective intensity clamps",
+		is_equal_approx(MusicTranslation.effective_intensity(1.4, -0.2), 1.0))
+	var state_lookup := MusicTranslation.build_default_state_tension()
+	failure_count += expect_true("low health lifts intensity more than hurt",
+		MusicTranslation.state_tension(state_lookup, &"state.lowhealth") > MusicTranslation.state_tension(state_lookup, &"state.hurt"))
+	failure_count += expect_true("an unmapped state imposes no floor",
+		is_zero_approx(MusicTranslation.state_tension(state_lookup, &"state.paused")))
+
 	# --- crossfade ---
 	var start := MusicTranslation.crossfade_volumes(0.0, -30.0)
 	failure_count += expect_true("crossfade start: old full, new floored",

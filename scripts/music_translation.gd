@@ -28,6 +28,25 @@ static func stem_volume_db(
 	return lerpf(p_floor_db, 0.0, stem_activation(p_index, p_intensity, p_stem_count))
 
 
+## Effective intensity: the louder of the tension the game asked for
+## (`music.tension`) and any floor a `state.*` event imposes.
+static func effective_intensity(p_requested: float, p_state_floor: float) -> float:
+	return maxf(clampf(p_requested, 0.0, 1.0), clampf(p_state_floor, 0.0, 1.0))
+
+
+## Default `state.* -> intensity floor` map: a hurt state lifts the arrangement,
+## low health lifts it further.
+static func build_default_state_tension() -> Dictionary:
+	return {
+		EventIds.STATE_HURT: 0.5,
+		EventIds.STATE_LOWHEALTH: 0.85,
+	}
+
+
+static func state_tension(p_lookup: Dictionary, p_state_id: StringName) -> float:
+	return p_lookup.get(p_state_id, 0.0)
+
+
 ## `{ out_db, in_db }` for a theme crossfade at `p_progress` 0..1: the old theme
 ## rides from `0.0` down to `p_floor_db`, the new one the other way.
 static func crossfade_volumes(p_progress: float, p_floor_db: float) -> Dictionary:

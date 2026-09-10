@@ -547,7 +547,9 @@ Autoload `MusicDirector`, `class_name MusicDirectorSubsystem`
 
 - **Listens:** `music.theme` (`context.source_id` = theme id), `music.tension`
   (`context.magnitude` = intensity 0–1), `music.stinger` (`context.source_id`),
-  `biome.entered` / `biome.exited` (ambience bed).
+  `biome.entered` / `biome.exited` (ambience bed), `state.hurt` /
+  `state.lowhealth` / `state.paused` (an intensity *floor* from
+  `music_state_tension`, default hurt 0.5 / lowhealth 0.85) + `state.clear`.
 - **`MusicTranslation`** (`scripts/music_translation.gd`, autoload-free static):
   `stem_asset_id(theme, i)` → `"<theme>.<i>"`, `stem_activation` /
   `stem_volume_db` (stem *i* fades in once `intensity·count > i`, so rising
@@ -559,18 +561,21 @@ Autoload `MusicDirector`, `class_name MusicDirectorSubsystem`
   targets via `set_intensity`, and a separate crossfade `Tween` fades the
   outgoing bank **down** to the floor and stops it. The two tweens never touch
   the same player.
-- **Intensity:** `music.tension` → `set_intensity` retweens every active-bank
-  stem to `MusicTranslation.stem_volume_db(...)` over ~0.5 s (blend, no restart).
+- **Intensity:** `set_intensity` (`music.tension`) and `set_state_intensity`
+  (`state.*`) both feed `apply_intensity`; the effective level is
+  `MusicTranslation.effective_intensity` — the louder of the requested tension
+  and the state floor. The active bank retweens to
+  `MusicTranslation.stem_volume_db(...)` over ~0.5 s (blend, no restart).
 - **Ambience:** one looping `AudioStreamPlayer` on bus `Ambience`, stream from
   `resolve_music("ambience.<biome>")`, swapped on `biome.entered`, stopped on
   `biome.exited` or a missing mapping.
 - **Stinger:** one `AudioStreamPlayer` on bus `Music`, `resolve_music("stinger.<id>")`,
   fired over the running theme (no duck).
 - **Demo:** `scenes/demo_music.tscn` — theme forest/cave, a tension slider,
-  stinger + ambience buttons, over a code-built `ThemeProfile` of looping
-  `ToneStream`s.
-- **Deferred:** `state.*` → tension mapping (only `music.tension` drives it now);
-  sample-lock is best-effort (all stems `play()` in one frame).
+  stinger / ambience / `state.lowhealth` / `state.clear` buttons, over a
+  code-built `ThemeProfile` of looping `ToneStream`s.
+- **Deferred:** sample-lock is best-effort (all stems `play()` in one frame);
+  `music_stem_count` is fixed after `_ready()`.
 
 ### G. Audio Bus / Mixing Subsystem — `AudioMixing`  ✅ implemented (Phase 7)
 
@@ -588,20 +593,23 @@ Autoload `AudioMixing`, `class_name AudioMixingSubsystem`
   autoload-free static): `neutral_profile`, `make_profile`, `bus_targets`
   (`bus → dB`, never `UI`), `is_dry_bus`, `reverb_{wet,room_size}_for` (clamped).
   Unit-tested.
-- **Listens:** `biome.entered` → `ThemeManager.resolve_bus_profile(biome_id)` (or
-  neutral) → `apply_bus_profile` tweens the trimmable bus gains
+- **Listens:** `biome.entered` → `resolve_bus_profile(biome_id)` (or neutral),
+  stored as `biome_profile` → `apply_bus_profile` tweens the trimmable bus gains
   (`AudioServer.set_bus_volume_db` via `tween_method`) and the reverb `wet` /
   `room_size` over `MIX_TWEEN_SECONDS`, no hard swaps. `biome.exited` → neutral.
+  `state.hurt` / `state.lowhealth` / `state.paused` → apply
+  `resolve_bus_profile(state_id)` as a **transient grade over the biome**
+  (`biome_profile` is not overwritten); `state.clear` → re-apply `biome_profile`.
 - **Dry-UI guarantee:** `bus_targets` never lists `UI` and the reverb is only on
   `SFX`, so `ui.*` SFX (routed to the `UI` bus by `SfxPlayer`) are always dry.
   `is_ui_bus_dry()` asserts it for tooling.
 - **Spatialisation:** `@export spatial_{max_distance,attenuation,panning_strength}`
   applied to every positional voice via `AudioMixing.apply_spatialisation(voice)`,
   called by `SfxPlayer` after acquiring one.
-- **Demo:** `scenes/demo_mixing.tscn` — a looping SFX tone + cave/hall/dry
-  buttons; the reverb audibly wets and dries.
-- **Deferred:** EQ per bus (only gain + reverb now); `state.*` bus overrides
-  (only `biome.*` wired).
+- **Demo:** `scenes/demo_mixing.tscn` — a looping SFX tone + cave / hall / dry /
+  `state.hurt` / `state.clear` buttons; the reverb audibly wets and dries.
+- **Deferred:** per-bus EQ (only gain + reverb now); `SFX_Reverb` as a real send
+  bus (currently a direct effect on `SFX`).
 
 ---
 

@@ -10,6 +10,8 @@ extends Node2D
 @export var node_cave_button: BaseButton
 @export var node_hall_button: BaseButton
 @export var node_dry_button: BaseButton
+@export var node_hurt_button: BaseButton
+@export var node_state_clear_button: BaseButton
 @export var node_sfx_timer: Timer
 
 var is_playing_sfx: bool = false
@@ -26,6 +28,8 @@ func _ready() -> void:
 	node_cave_button.pressed.connect(func() -> void: enter_biome(&"cave"))
 	node_hall_button.pressed.connect(func() -> void: enter_biome(&"hall"))
 	node_dry_button.pressed.connect(func() -> void: EventBus.emit_semantic_event(EventIds.BIOME_EXITED, {}))
+	node_hurt_button.pressed.connect(func() -> void: EventBus.emit_semantic_event(EventIds.STATE_HURT, {}))
+	node_state_clear_button.pressed.connect(func() -> void: EventBus.emit_semantic_event(EventIds.STATE_CLEAR, {}))
 	node_sfx_timer.timeout.connect(handle_node_sfx_timer_timeout)
 
 
@@ -36,6 +40,7 @@ func build_profile() -> ThemeProfile:
 	profile.bus_profile_assets = {
 		&"cave": AudioMixingTranslation.make_profile(&"cave", -1.0, 0.0, 0.0, 0.4, 0.65),
 		&"hall": AudioMixingTranslation.make_profile(&"hall", -2.0, 0.0, 1.0, 0.7, 0.95),
+		&"state.hurt": AudioMixingTranslation.make_profile(&"state.hurt", -10.0, 0.0, 3.0, 0.1, 0.2),
 	}
 	return profile
 

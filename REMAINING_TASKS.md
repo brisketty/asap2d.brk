@@ -280,8 +280,9 @@ checks green; editor import clean; demo + music runtime smoke pass).
 
 ### Phase 6 follow-ups
 
-- [ ] `state.*` (`state.lowhealth` etc.) → tension mapping (only `music.tension`
-  drives intensity now).
+- [x] `state.*` → intensity floor — `music_state_tension` (default hurt 0.5 /
+  lowhealth 0.85); `MusicTranslation.effective_intensity` = max(requested,
+  state); `state.clear` releases it.
 - [ ] Tighter sample-lock (currently all stems `play()` in one frame - fine at
   60 fps, may drift on a hitch).
 - [ ] `music_stem_count` is fixed after `_ready()`; changing it needs a restart.
@@ -318,8 +319,10 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
 
 ### Phase 7 follow-ups
 
+- [x] `state.*` bus overrides — `state.hurt`/`lowhealth`/`paused` apply a
+  transient `resolve_bus_profile(state_id)` over the stored `biome_profile`;
+  `state.clear` restores the biome.
 - [ ] Per-bus EQ (only gain + reverb now).
-- [ ] `state.*` bus overrides (only `biome.*` wired).
 - [ ] `SFX_Reverb` as a real send bus (currently a direct effect on `SFX`).
 
 ---
@@ -352,6 +355,20 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
 ---
 
 ## History
+
+### 2026-09-10 — `state.*` wired into audio (post-merge polish)
+
+- `MusicDirector` — `state.hurt`/`lowhealth`/`paused` impose an intensity *floor*
+  (`music_state_tension`, default 0.5 / 0.85); `MusicTranslation.effective_intensity`
+  takes `max(requested, state_floor)`; `set_intensity` / `set_state_intensity`
+  both feed `apply_intensity`. `state.clear` releases the floor.
+- `AudioMixing` — the same `state.*` events apply a transient
+  `resolve_bus_profile(state_id)` grade *over* the remembered `biome_profile`
+  (not overwriting it); `state.clear` re-applies the biome.
+- Demo buttons added to `demo_music` / `demo_mixing`. Camera already reacted to
+  `state.*`; now all three of the state-aware subsystems do.
+- 12 suites / 170 checks; smoke verified `state.lowhealth` lifting stems and
+  `state.clear` restoring both music tension and the biome bus profile.
 
 ### 2026-09-10 — Scanner deepening + convention lint
 

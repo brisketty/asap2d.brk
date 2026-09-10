@@ -3,9 +3,9 @@ extends Node
 ## BGM & Ambience. Registered as the `MusicDirector` autoload.
 ##
 ## Runs a stack of sample-locked music stems that layer in as intensity rises
-## (`music.tension`), crossfades between themes over two banks of stem players
-## (`music.theme`), swaps a looping ambience bed per biome (`biome.entered`), and
-## fires one-shot stingers over the top (`music.stinger`).
+## (`music.tension`, and a floor imposed by `state.*`), crossfades between themes
+## over two banks of stem players (`music.theme`), swaps a looping ambience bed
+## per biome (`biome.entered`), and fires one-shot stingers (`music.stinger`).
 ##
 ## Blend / crossfade math lives in `MusicTranslation`.
 
@@ -19,6 +19,8 @@ const INTENSITY_TWEEN_SECONDS := 0.5
 @export var music_stem_floor_db: float = -40.0
 @export var music_bus: StringName = &"Music"
 @export var music_ambience_bus: StringName = &"Ambience"
+## `state.* -> intensity floor`. Empty uses `build_default_state_tension()`.
+@export var music_state_tension: Dictionary = {}
 
 ## Flat [bank0 stem0..N, bank1 stem0..N]; index via stem().
 var stem_players: Array[AudioStreamPlayer] = []
@@ -28,11 +30,17 @@ var stinger_player: AudioStreamPlayer
 var active_bank: int = 0
 var current_theme_id: StringName = &""
 var current_intensity: float = 0.0
+var requested_intensity: float = 0.0
+var state_intensity: float = 0.0
+var state_tension_lookup: Dictionary = {}
 var crossfade_tween: Tween
 var intensity_tween: Tween
 
 
 func _ready() -> void:
+	state_tension_lookup = music_state_tension
+	if state_tension_lookup.is_empty():
+		state_tension_lookup = MusicTranslation.build_default_state_tension()
 	for i: int in music_stem_count * 2:
 		var bank := i / music_stem_count
 		stem_players.append(make_player(music_bus, bank == active_bank))
@@ -65,6 +73,10 @@ func handle_semantic_event_emitted(p_event_id: StringName, p_context: Dictionary
 			swap_ambience(p_context.get(Utility.CONTEXT_SOURCE_ID_KEY, &""))
 		EventIds.BIOME_EXITED:
 			swap_ambience(&"")
+		EventIds.STATE_HURT, EventIds.STATE_LOWHEALTH, EventIds.STATE_PAUSED:
+			set_state_intensity(MusicTranslation.state_tension(state_tension_lookup, p_event_id))
+		EventIds.STATE_CLEAR:
+			set_state_intensity(0.0)
 
 
 func play_theme(p_theme_id: StringName) -> void:
@@ -91,9 +103,9 @@ func crossfade(p_incoming_bank: int) -> void:
 	var outgoing_bank := active_bank
 	active_bank = p_incoming_bank
 	# The incoming (now active) bank fades up to its intensity targets via
-	# set_intensity; the crossfade tween only fades the outgoing bank down, so the
-	# two never animate the same player.
-	set_intensity(current_intensity)
+	# apply_intensity; the crossfade tween only fades the outgoing bank down, so
+	# the two never animate the same player.
+	apply_intensity()
 	crossfade_tween = create_tween().set_parallel(true)
 	for i: int in music_stem_count:
 		crossfade_tween.tween_property(stem(outgoing_bank, i), "volume_db", music_stem_floor_db, music_crossfade_seconds)
@@ -105,8 +117,20 @@ func stop_bank(p_bank: int) -> void:
 		stem(p_bank, i).stop()
 
 
+## `music.tension` sets the requested intensity.
 func set_intensity(p_value: float) -> void:
-	current_intensity = clampf(p_value, 0.0, 1.0)
+	requested_intensity = clampf(p_value, 0.0, 1.0)
+	apply_intensity()
+
+
+## `state.*` imposes an intensity floor; the effective level is the louder one.
+func set_state_intensity(p_value: float) -> void:
+	state_intensity = clampf(p_value, 0.0, 1.0)
+	apply_intensity()
+
+
+func apply_intensity() -> void:
+	current_intensity = MusicTranslation.effective_intensity(requested_intensity, state_intensity)
 	if Utility.is_object_valid(intensity_tween):
 		intensity_tween.kill()
 	intensity_tween = create_tween().set_parallel(true)

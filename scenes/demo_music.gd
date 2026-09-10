@@ -11,6 +11,8 @@ extends Node2D
 @export var node_stinger_button: BaseButton
 @export var node_forest_ambience_button: BaseButton
 @export var node_stop_ambience_button: BaseButton
+@export var node_lowhealth_button: BaseButton
+@export var node_state_clear_button: BaseButton
 
 
 static func get_packed_scene() -> PackedScene:
@@ -26,6 +28,8 @@ func _ready() -> void:
 	node_stinger_button.pressed.connect(func() -> void: emit_stinger(&"reveal"))
 	node_forest_ambience_button.pressed.connect(func() -> void: emit_biome(&"forest"))
 	node_stop_ambience_button.pressed.connect(func() -> void: EventBus.emit_semantic_event(EventIds.BIOME_EXITED, {}))
+	node_lowhealth_button.pressed.connect(func() -> void: EventBus.emit_semantic_event(EventIds.STATE_LOWHEALTH, {}))
+	node_state_clear_button.pressed.connect(func() -> void: EventBus.emit_semantic_event(EventIds.STATE_CLEAR, {}))
 
 
 func build_score_profile() -> ThemeProfile:
