@@ -19,7 +19,7 @@ document — update it when reality changes.
 | Foundation logic | `scripts/`, `autoloads/` | `Utility`, `ThemeProfile`, `AssetIdScanner`, `EventIds`, `run_asset_scan`, `lint_conventions`; `EventBus`, `ThemeManager` |
 | Object pool | `prefabs/node_pool.{gd,tscn}` | `NodePool` — generic |
 | Impact VFX (Phase 1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*.{gd,tscn}`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | translation autoload-free + tested |
-| World & Env (Phase 2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay}.{gd,tscn}` | fixed id set, profile maps per biome |
+| World & Env (Phase 2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | fixed id set, profile maps per biome |
 | Camera (Phase 3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/camera_rig.{gd,tscn}` | owns the Camera2D; `set_followed(node)` |
 | HUD (Phase 4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/{hud_translation,tweens}.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is world-space; `Tweens` = static recipes |
 | SFX (Phase 5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route,tone_stream}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under autoload; `notify_scene_change()` cuts transients |
@@ -35,13 +35,15 @@ document — update it when reality changes.
 ## Current state (2026-09-10)
 
 - **Framework complete — Phases 0–7 + tooling, done and green.** 12 test suites /
-  170 checks; editor import clean; 8 demos + `run_asset_scan` + `lint_conventions`
+  171 checks; editor import clean; 8 demos + `run_asset_scan` + `lint_conventions`
   + per-subsystem runtime smokes all run headless with no errors.
+  `exports/asset_worklist.md` lists `world.tiles` (the `AnimatedTileDriver`
+  default id has no shipped mapping — expected).
 - **Merged to `main` and pushed to `origin`** (`--no-ff` merge `a3f6d1b`; the
   feature commits are kept in history). `framework/foundation` still exists
   locally — delete it when ready (`git branch -d framework/foundation`).
-- Asset kinds live (7): sprite, audio, particle, shader, post_fx, music,
-  bus_profile. Adding a kind: `ThemeProfile` export trio +
+- Asset kinds live (8): sprite, audio, particle, shader, post_fx, music,
+  bus_profile, tileset. Adding a kind: `ThemeProfile` export trio +
   `resolve_/collect_/update_from_`; `ThemeManager` fallback export +
   `resolve_`/`has_` (2 lines each via `resolve_with_ladder`); scanner
   `SUFFIX`/`KIND` + 2 branches. Dict-of-dicts idea **rejected** (inspector

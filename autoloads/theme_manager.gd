@@ -21,6 +21,7 @@ signal active_profile_changed(p_profile_id: StringName)
 @export var profile_fallback_post_fx: ShaderMaterial
 @export var profile_fallback_music: AudioStream
 @export var profile_fallback_bus_profile: BusProfile
+@export var profile_fallback_tileset: TileSet
 
 var active_profile: ThemeProfile:
 	set(p_value):
@@ -134,6 +135,12 @@ func resolve_bus_profile(p_asset_id: StringName) -> BusProfile:
 		profile_default_or_null(&"default_bus_profile"), profile_fallback_bus_profile) as BusProfile
 
 
+func resolve_tileset(p_asset_id: StringName) -> TileSet:
+	return resolve_with_ladder("tileset", p_asset_id,
+		profile_asset_or_null(&"resolve_tileset_or_null", p_asset_id),
+		profile_default_or_null(&"default_tileset"), profile_fallback_tileset) as TileSet
+
+
 func has_sprite(p_asset_id: StringName) -> bool:
 	return Utility.is_object_valid(profile_asset_or_null(&"resolve_sprite_or_null", p_asset_id))
 
@@ -160,3 +167,7 @@ func has_music(p_asset_id: StringName) -> bool:
 
 func has_bus_profile(p_asset_id: StringName) -> bool:
 	return Utility.is_object_valid(profile_asset_or_null(&"resolve_bus_profile_or_null", p_asset_id))
+
+
+func has_tileset(p_asset_id: StringName) -> bool:
+	return Utility.is_object_valid(profile_asset_or_null(&"resolve_tileset_or_null", p_asset_id))

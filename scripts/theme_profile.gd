@@ -52,6 +52,12 @@ extends Resource
 		bus_profile_assets = p_value
 		update_from_bus_profile_assets()
 
+## StringName -> TileSet (per-biome ground / wall tiles).
+@export var tileset_assets: Dictionary:
+	set(p_value):
+		tileset_assets = p_value
+		update_from_tileset_assets()
+
 @export var default_sprite: Texture2D
 @export var default_audio: AudioStream
 @export var default_particle: Resource
@@ -59,6 +65,7 @@ extends Resource
 @export var default_post_fx: ShaderMaterial
 @export var default_music: AudioStream
 @export var default_bus_profile: BusProfile
+@export var default_tileset: TileSet
 
 
 func update_from_sprite_assets() -> void:
@@ -86,6 +93,10 @@ func update_from_music_assets() -> void:
 
 
 func update_from_bus_profile_assets() -> void:
+	pass # Hook for derived profiles that precompute lookup state.
+
+
+func update_from_tileset_assets() -> void:
 	pass # Hook for derived profiles that precompute lookup state.
 
 
@@ -131,6 +142,12 @@ func resolve_bus_profile_or_null(p_asset_id: StringName) -> BusProfile:
 	return bus_profile_assets[p_asset_id] as BusProfile
 
 
+func resolve_tileset_or_null(p_asset_id: StringName) -> TileSet:
+	if not tileset_assets.has(p_asset_id):
+		return null
+	return tileset_assets[p_asset_id] as TileSet
+
+
 func collect_sprite_ids() -> PackedStringArray:
 	return collect_ids_of(sprite_assets)
 
@@ -157,6 +174,10 @@ func collect_music_ids() -> PackedStringArray:
 
 func collect_bus_profile_ids() -> PackedStringArray:
 	return collect_ids_of(bus_profile_assets)
+
+
+func collect_tileset_ids() -> PackedStringArray:
+	return collect_ids_of(tileset_assets)
 
 
 func collect_ids_of(p_asset_dictionary: Dictionary) -> PackedStringArray:

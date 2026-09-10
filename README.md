@@ -52,8 +52,8 @@ Each downgrade logs once via `printerr`. `resolve_audio(id)` mirrors this.
 
 Presentation scripts expose ids as `@export` vars with these suffixes:
 
-- `*_sprite_asset_id` / `*_audio_asset_id` / `*_particle_asset_id` /
-  `*_shader_asset_id` — resolved through `ThemeManager.resolve_<kind>`
+- `*_<kind>_asset_id` for kind in sprite / audio / particle / shader / post_fx /
+  music / bus_profile / tileset — resolved through `ThemeManager.resolve_<kind>`
 - `*_event_id` — an `EventBus` semantic event id (use an `EventIds` constant)
 
 ### Generating the artist worklist
@@ -94,8 +94,9 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
   `HitFlash` / `KnockbackReceiver` / `SquashStretch` components.
   Demo: `scenes/demo_impact_vfx.tscn`.
 - **World & Environment** (`WorldEnvironment2D`) — ✅ biome-driven parallax rig,
-  ambient particle layer, full-screen shader overlay; switches the active
-  `ThemeProfile` per biome. Demo: `scenes/demo_world.tscn`.
+  ambient particle layer, full-screen shader overlay, `AnimatedTileDriver`
+  (per-biome `TileSet` swap); switches the active `ThemeProfile` per biome.
+  Demo: `scenes/demo_world.tscn`.
 - **Camera & Post-Processing** (`CameraDirector`) — ✅ trauma-based screen shake,
   zoom/focus tweens, state-driven post-FX grades (hurt vignette). Owns the
   `Camera2D`; gameplay calls `set_followed(node)`. Demo: `scenes/demo_camera.tscn`.

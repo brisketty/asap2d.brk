@@ -142,16 +142,17 @@ thing.
   `update_from_particle_assets()`.
 - `@export var shader_assets` (`-> ShaderMaterial`, world atmosphere),
   `post_fx_assets` (`-> ShaderMaterial`, state grades), `music_assets`
-  (`-> AudioStream`, looped), each with its `update_from_*` setter.
-- `@export var default_{sprite,audio,particle,shader,post_fx,music}` (typed).
+  (`-> AudioStream`, looped), `bus_profile_assets` (`-> BusProfile`),
+  `tileset_assets` (`-> TileSet`), each with its `update_from_*` setter.
+- `@export var default_{sprite,audio,particle,shader,post_fx,music,bus_profile,tileset}`.
 - `resolve_{…}_or_null(p_asset_id)` — raw lookup, **no fallback**.
 - `collect_{…}_ids() -> PackedStringArray` — thin wrappers over
   `collect_ids_of(Dictionary)`, for tooling.
 
-**Growth (see Cross-cutting).** Each new asset kind adds a parallel
-`<kind>_assets: Dictionary`, `default_<kind>`, `resolve_<kind>_or_null`,
-`collect_<kind>_ids`. When the count justifies it this collapses into a single
-`Dictionary` of `Dictionary` keyed by kind + a generic `resolve_or_null(p_kind, p_asset_id)`.
+**Growth.** See "`ThemeProfile` scaling" under Cross-cutting — explicit typed
+per-kind exports, one `resolve_<kind>` / `has_<kind>` pair each on `ThemeManager`
+built on `resolve_with_ladder`. The dict-of-dicts idea was considered and
+rejected (inspector clarity).
 
 ### 4. `ThemeManager` — `autoloads/theme_manager.gd`
 
@@ -162,7 +163,7 @@ single choke point for every asset lookup in the framework.
   - `@export var profile_available: Array[ThemeProfile]`
   - `@export var profile_fallback_sprite: Texture2D = preload("res://icon.svg")`
   - `@export var profile_fallback_audio: AudioStream`
-  - `@export var profile_fallback_{particle,shader,post_fx,music}` (typed)
+  - `@export var profile_fallback_{particle,shader,post_fx,music,bus_profile,tileset}`
 - `signal active_profile_changed(p_profile_id: StringName)`
 - `var active_profile: ThemeProfile` — setter → `update_from_active_profile()`
   which emits `active_profile_changed` with the new `profile_id` (or `&""`).
@@ -174,12 +175,12 @@ single choke point for every asset lookup in the framework.
 - `resolve_sprite(p_asset_id: StringName) -> Texture2D` — **never null**. Ladder:
   active-profile mapping → active-profile `default_sprite` →
   `profile_fallback_sprite`. `printerr` on each downgrade.
-- `resolve_{audio,particle,shader,post_fx,music}` — same ladder as
-  `resolve_sprite` (all built on `resolve_with_ladder` + `profile_asset_or_null`
-  + `profile_default_or_null`); the final fallback may be `null` when the project
-  never configures that `profile_fallback_*`.
-- `has_{sprite,audio,particle,shader,post_fx,music}(p_asset_id) -> bool` —
-  non-logging existence check against the active profile, for `AssetIdScanner`.
+- `resolve_{audio,particle,shader,post_fx,music,bus_profile,tileset}` — same
+  ladder as `resolve_sprite` (all built on `resolve_with_ladder` +
+  `profile_asset_or_null` + `profile_default_or_null`); the final fallback may be
+  `null` when the project never configures that `profile_fallback_*`.
+- `has_<kind>(p_asset_id) -> bool` for every kind — non-logging existence check
+  against the active profile, for `AssetIdScanner`.
 
 Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 
@@ -188,7 +189,7 @@ Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 `@tool class_name AssetIdScanner`, `extends RefCounted`. Pure static methods
 (same shape as `BrisklanceSelfUpdater`).
 
-Constants: `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX,MUSIC}_ID_SUFFIX`
+Constants: `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX,MUSIC,BUS_PROFILE,TILESET}_ID_SUFFIX`
 (`"_<kind>_asset_id"`), `EVENT_ID_SUFFIX := "_event_id"`,
 `SCENE_EXTENSION := ".tscn"`; matching `*_KIND` constants.
 `classify_property` checks the more specific `_post_fx_asset_id` /
@@ -347,7 +348,7 @@ A subsystem PR that introduces an id adds a row here.
 | post_fx | `_post_fx_asset_id` | `post_fx_assets` | `ShaderMaterial` (state grade) | live |
 | music | `_music_asset_id` | `music_assets` | `AudioStream` (looped) | live |
 | bus_profile | `_bus_profile_asset_id` | `bus_profile_assets` | `BusProfile` | live |
-| tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | planned (Phase 2 follow-up) |
+| tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | live |
 
 `resolve_sprite` always returns a texture (the `res://icon.svg` engine default).
 Every other `resolve_*` may return `null` until the project sets the matching
@@ -430,11 +431,15 @@ Autoload `WorldEnvironment2D`, `class_name WorldEnvironment2DSubsystem`
   stack with `motion_mirroring` tiling), `ambient_particle_layer` (`CanvasLayer`
   + looping `GPUParticles2D`), `screen_shader_overlay` (`CanvasLayer` +
   full-rect `ColorRect`).
+- **`AnimatedTileDriver`** (`prefabs/animated_tile_driver.{gd,tscn}`) — opt-in:
+  a level scene adds it under a `TileMapLayer`, and on `active_profile_changed`
+  it swaps `node_tilemap_layer.tile_set = ThemeManager.resolve_tileset(...)`
+  (default id `world.tiles`). A null resolve leaves the current tiles in place.
+  Per-tile animation lives in the `TileSet`; the engine advances it.
 - **Demo:** `scenes/demo_world.tscn` — forest / cave / exit buttons, a panning
-  camera, two biome `ThemeProfile`s (`assets/theme_profile_{forest,cave}.tres`;
-  forest deliberately omits `world.ambient` to show the null-fallback).
-- **Deferred:** animated tiles / `AnimatedTileDriver` + a `tileset` asset kind —
-  a Phase 2 follow-up in `REMAINING_TASKS.md`.
+  camera, two biome `ThemeProfile`s (forest deliberately omits `world.ambient`
+  to show the null-fallback), and a `Ground` `TileMapLayer` + `AnimatedTileDriver`
+  fed code-built per-biome `TileSet`s.
 
 ### C. Camera & Post-Processing Subsystem — `CameraDirector`
 
@@ -624,7 +629,7 @@ need a per-node reset on reuse should give `pool_scene`'s root a
 
 ### `ThemeProfile` scaling
 
-**Decision (settled at kind 6, `music`; holds at 7 with `bus_profile`).**
+**Decision (settled at kind 6; unchanged through 8 kinds).**
 `ThemeProfile` keeps an **explicit typed `@export var <kind>_assets: Dictionary`
 + `default_<kind>` per kind** — it reads far better in the inspector and in
 hand-edited `.tres` than an opaque `Dictionary` of `Dictionary`. The duplication that mattered was on the

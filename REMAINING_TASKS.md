@@ -141,9 +141,14 @@ Spec: §B. Depends on: `resolve_particle`, `resolve_shader`. **✅ complete**
 
 ### Phase 2 follow-ups
 
-- [ ] Animated tiles: `AnimatedTileDriver` + a `tileset` asset kind
-  (`ThemeManager.resolve_tileset` / `has_tileset`, scanner `TILESET_ID_SUFFIX`).
-  Deferred — `TileMapLayer` animation is a rabbit hole and cleanly separable.
+- [x] Animated tiles — `tileset` asset kind (8th) end to end
+  (`ThemeProfile.tileset_assets` / `resolve_tileset` / `has_tileset` / scanner
+  `TILESET_ID_SUFFIX` / `TILESET_KIND`); `prefabs/animated_tile_driver.{gd,tscn}`
+  (`AnimatedTileDriver` — swaps `TileMapLayer.tile_set` on `active_profile_changed`,
+  keeps the current one on a null resolve). Per-tile animation is left to the
+  `TileSet` / engine. Demo: a `Ground` layer + driver in `demo_world` with
+  code-built per-biome tilesets. **`world.tiles` shows in the worklist** — it has
+  no shipped mapping (the demo injects tilesets at runtime).
 - [ ] `biome_profile` still uses fixed constant ids in the subsystem, not
   `@export`s (autoload can't wire exports) — same limitation as the impact
   intensity table; the "scan `.tres`/`Resource` arrays" follow-up covers making
@@ -355,6 +360,19 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
 ---
 
 ## History
+
+### 2026-09-10 — `tileset` asset kind + AnimatedTileDriver (Phase 2 follow-up)
+
+8th asset kind, closes out World & Environment. `AnimatedTileDriver` is an
+opt-in `TileMapLayer` sibling that re-resolves `world.tiles` on
+`active_profile_changed`. `demo_world` grew a `Ground` layer with code-built
+per-biome `TileSet`s (forest atlas tile (0,0), cave (1,1)) so the swap is
+visible. Smoke: forest → 24 floor cells at tile (0,0); cave → tileset swapped
+to a different object, repainted at (1,1). 12 suites / 171 checks.
+
+`exports/asset_worklist.md` now lists `[tileset] world.tiles` — legitimately
+unmapped (no shipped tiles; the demo injects tilesets in code, which the scanner
+can't see). First non-empty worklist.
 
 ### 2026-09-10 — `state.*` wired into audio (post-merge polish)
 
