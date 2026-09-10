@@ -37,7 +37,23 @@ func _initialize() -> void:
 	manager.active_profile = sparse
 	failure_count += expect_true("missing profile default falls back to engine fallback", manager.resolve_sprite(&"nope") == engine_fallback)
 	failure_count += expect_true("resolve_sprite never null", Utility.is_object_valid(manager.resolve_sprite(&"anything")))
-	failure_count += expect_true("resolve_audio never null after audio fallback set", manager.resolve_audio(&"anything") == manager.profile_fallback_audio)
+	failure_count += expect_true("resolve_audio null when no fallback set", manager.resolve_audio(&"anything") == null)
+
+	# music: 6th kind, same ladder via the generic helper
+	var music_stream := AudioStreamWAV.new()
+	var music_profile := ThemeProfile.new()
+	music_profile.profile_id = &"scored"
+	music_profile.music_assets = {&"music.theme.forest": music_stream}
+	manager.active_profile = music_profile
+	failure_count += expect_true("mapped music resolves", manager.resolve_music(&"music.theme.forest") == music_stream)
+	failure_count += expect_true("has_music true for mapped", manager.has_music(&"music.theme.forest"))
+	failure_count += expect_true("has_music false for missing", not manager.has_music(&"music.theme.cave"))
+	failure_count += expect_true("missing music with no default -> null", manager.resolve_music(&"music.theme.cave") == null)
+
+	# no active profile: straight to engine fallback, no crash
+	manager.active_profile = null
+	failure_count += expect_true("no profile -> engine sprite fallback", manager.resolve_sprite(&"x") == engine_fallback)
+	failure_count += expect_true("no profile -> has_sprite false", not manager.has_sprite(&"x"))
 
 	manager.free()
 

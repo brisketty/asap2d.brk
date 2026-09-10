@@ -297,8 +297,10 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 
 - [ ] `Presentation` umbrella autoload owning the 7 subsystems as children, if
   autoload count / load order / teardown becomes awkward.
-- [ ] `ThemeProfile` generic `resolve(kind, id)` refactor (trigger: 5+ asset
-  kinds live; at 3 now — sprite/audio/particle).
+- [x] ~~`ThemeProfile` generic `resolve(kind, id)` refactor~~ — **decided against**
+  at kind 6. `ThemeProfile` keeps explicit typed exports (inspector-friendly);
+  the `ThemeManager` duplication was removed via `resolve_with_ladder` +
+  `profile_asset_or_null` instead. See spec "`ThemeProfile` scaling".
 - [ ] Per-biome `ThemeProfile` sub-resources to keep single profiles small.
 - [ ] CI: run all `/tests/*.gd` headless on push; diff `exports/asset_worklist.md`.
 - [ ] `CONTRIBUTING.md` — subsystem author checklist (mirrors spec §Conventions).
@@ -308,6 +310,18 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — ThemeManager resolution refactor + `music` kind (kind 6)
+
+Standalone step before Phase 6. Added the `music` asset kind
+(`ThemeProfile.music_assets` / `resolve_music` / `has_music` / scanner
+`MUSIC_ID_SUFFIX`). **Decided against** the dictionary-of-dictionaries
+`ThemeProfile` refactor — explicit typed `@export` dictionaries read better in
+the inspector. Instead collapsed the `ThemeManager` duplication into
+`resolve_with_ladder(kind, id, profile_asset, profile_default, engine_fallback)`
++ `profile_asset_or_null(method, id)` + `profile_default_or_null(property)`; each
+`resolve_<kind>` / `has_<kind>` is now 1–2 lines. `theme_manager.gd` 160 → 150
+lines but adding a kind is ~half the diff. 10 suites / 134 checks green.
 
 ### 2026-09-10 — Phase 5: Polyphonic Audio / SFX
 

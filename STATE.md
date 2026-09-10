@@ -37,10 +37,13 @@ document — update it when reality changes.
   errors.
 - **Committed on branch `framework/foundation`** (not `main`). `5d8d11a`=P0,
   `9b13050`=P1, `619dade`=P2, `b8d75e9`=P3, `0258ef1`=P4. Phase 5 not yet committed.
-- Asset kinds live: sprite, audio, particle, shader, post_fx (5).
-  **The 6th kind triggers the generic `ThemeManager.resolve(kind,id)` refactor.**
-- **Next: Phase 6 (BGM & Ambience)** — `MusicDirector` autoload; needs
-  `ThemeManager.resolve_music` (the 6th kind → do the refactor first).
+- Asset kinds live: sprite, audio, particle, shader, post_fx, **music** (6).
+  Adding a kind: `ThemeProfile` export trio + `resolve_/collect_/update_from_`;
+  `ThemeManager` fallback export + `resolve_`/`has_` (2 lines each via
+  `resolve_with_ladder`); scanner `SUFFIX`/`KIND` + 2 branches. No refactor
+  pending — the dict-of-dicts idea was **rejected** (inspector clarity).
+- **Next: Phase 6 (BGM & Ambience)** — `MusicDirector` autoload; `resolve_music`
+  is done. Stem blending, theme crossfades, ambience loops.
 
 ## How to run
 
@@ -147,13 +150,11 @@ destroyed` — **these are normal at-exit messages, not failures.** Grep them ou
 
 ## TODO (see REMAINING_TASKS.md for the full breakdown)
 
-Phases 0–5: **done.**
+Phases 0–5 + the `music` kind / ThemeManager refactor: **done.**
 
 **Next: Phase 6 — BGM & Ambience** (`MusicDirectorSubsystem` / autoload
-`MusicDirector`): stem blending, theme crossfades, ambience loops. Needs
-`resolve_music` — that's the **6th asset kind, so do the generic
-`ThemeManager.resolve(kind,id)` refactor first** (see spec Cross-cutting).
-Then Phase 7: Audio Bus / Mixing (flesh out `default_bus_layout.tres`).
+`MusicDirector`): stem blending, theme crossfades, ambience loops. `resolve_music`
+is ready. Then Phase 7: Audio Bus / Mixing (flesh out `default_bus_layout.tres`).
 
 **Open follow-ups (see REMAINING_TASKS.md):** scanner should walk exported
 `Resource` arrays / `.tres` (impact intensity table + world biome ids are
@@ -162,8 +163,6 @@ animated tiles + `tileset` kind (Phase 2).
 
 **Deferred / trigger-based:**
 
-- [ ] `ThemeProfile` generic `resolve(kind, id)` refactor — trigger: 5+ asset
-  kinds live (3 now), as its own task, not folded into a subsystem.
 - [ ] `Presentation` umbrella autoload — only if the ~9 autoloads become awkward
   for load order / teardown.
 - [ ] Per-biome `ThemeProfile` sub-resources.

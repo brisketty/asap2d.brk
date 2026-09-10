@@ -140,14 +140,13 @@ thing.
 - `@export var particle_assets: Dictionary` (`StringName -> Resource`:
   `ParticleProcessMaterial` or `PackedScene`), setter →
   `update_from_particle_assets()`.
-- `@export var shader_assets` (`-> ShaderMaterial`, world atmosphere) and
-  `@export var post_fx_assets` (`-> ShaderMaterial`, state grades), each with its
-  `update_from_*` setter.
-- `@export var default_{sprite,audio,particle,shader,post_fx}` (typed to match).
-- `resolve_{sprite,audio,particle,shader,post_fx}_or_null(p_asset_id)` — raw
-  lookup, **no fallback** (the manager applies and logs the fallback centrally).
-- `collect_{sprite,audio,particle,shader,post_fx}_ids() -> PackedStringArray` —
-  thin wrappers over `collect_ids_of(Dictionary)`, for tooling.
+- `@export var shader_assets` (`-> ShaderMaterial`, world atmosphere),
+  `post_fx_assets` (`-> ShaderMaterial`, state grades), `music_assets`
+  (`-> AudioStream`, looped), each with its `update_from_*` setter.
+- `@export var default_{sprite,audio,particle,shader,post_fx,music}` (typed).
+- `resolve_{…}_or_null(p_asset_id)` — raw lookup, **no fallback**.
+- `collect_{…}_ids() -> PackedStringArray` — thin wrappers over
+  `collect_ids_of(Dictionary)`, for tooling.
 
 **Growth (see Cross-cutting).** Each new asset kind adds a parallel
 `<kind>_assets: Dictionary`, `default_<kind>`, `resolve_<kind>_or_null`,
@@ -163,9 +162,7 @@ single choke point for every asset lookup in the framework.
   - `@export var profile_available: Array[ThemeProfile]`
   - `@export var profile_fallback_sprite: Texture2D = preload("res://icon.svg")`
   - `@export var profile_fallback_audio: AudioStream`
-  - `@export var profile_fallback_particle: Resource`
-  - `@export var profile_fallback_shader: ShaderMaterial`
-  - `@export var profile_fallback_post_fx: ShaderMaterial`
+  - `@export var profile_fallback_{particle,shader,post_fx,music}` (typed)
 - `signal active_profile_changed(p_profile_id: StringName)`
 - `var active_profile: ThemeProfile` — setter → `update_from_active_profile()`
   which emits `active_profile_changed` with the new `profile_id` (or `&""`).
@@ -177,11 +174,12 @@ single choke point for every asset lookup in the framework.
 - `resolve_sprite(p_asset_id: StringName) -> Texture2D` — **never null**. Ladder:
   active-profile mapping → active-profile `default_sprite` →
   `profile_fallback_sprite`. `printerr` on each downgrade.
-- `resolve_{audio,particle,shader,post_fx}` — same ladder as `resolve_sprite`;
-  the final fallback may be `null` when the project never configures that
-  `profile_fallback_*`.
-- `has_{sprite,audio,particle,shader,post_fx}(p_asset_id) -> bool` — non-logging
-  existence check against the active profile, for `AssetIdScanner`.
+- `resolve_{audio,particle,shader,post_fx,music}` — same ladder as
+  `resolve_sprite` (all built on `resolve_with_ladder` + `profile_asset_or_null`
+  + `profile_default_or_null`); the final fallback may be `null` when the project
+  never configures that `profile_fallback_*`.
+- `has_{sprite,audio,particle,shader,post_fx,music}(p_asset_id) -> bool` —
+  non-logging existence check against the active profile, for `AssetIdScanner`.
 
 Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 
@@ -190,11 +188,11 @@ Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 `@tool class_name AssetIdScanner`, `extends RefCounted`. Pure static methods
 (same shape as `BrisklanceSelfUpdater`).
 
-Constants: `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX}_ID_SUFFIX`
+Constants: `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX,MUSIC}_ID_SUFFIX`
 (`"_<kind>_asset_id"`), `EVENT_ID_SUFFIX := "_event_id"`,
-`SCENE_EXTENSION := ".tscn"`; kinds `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX,EVENT}_KIND`.
-`classify_property` checks `_post_fx_asset_id` before `_shader_asset_id` (both
-end in `_asset_id`).
+`SCENE_EXTENSION := ".tscn"`; matching `*_KIND` constants.
+`classify_property` checks the more specific `_post_fx_asset_id` /
+`_music_asset_id` before `_shader_asset_id` / `_audio_asset_id`.
 
 - `scan_directory(p_root_path: String) -> Array[Dictionary]` — recurse for
   `.tscn`, scan each.
@@ -343,8 +341,8 @@ A subsystem PR that introduces an id adds a row here.
 | particle | `_particle_asset_id` | `particle_assets` | `ParticleProcessMaterial` / `PackedScene` (typed `Resource`) | live |
 | shader | `_shader_asset_id` | `shader_assets` | `ShaderMaterial` (world atmosphere) | live |
 | post_fx | `_post_fx_asset_id` | `post_fx_assets` | `ShaderMaterial` (state grade) | live |
+| music | `_music_asset_id` | `music_assets` | `AudioStream` (looped) | live |
 | tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | planned (Phase 2 follow-up) |
-| music | `_music_asset_id` | `music_assets` | `AudioStream` (looped) | planned (Phase 6) |
 | bus_profile | `_bus_profile_asset_id` | `bus_profile_assets` | bus-effect config `Resource` | planned (Phase 7) |
 
 `resolve_sprite` always returns a texture (the `res://icon.svg` engine default).
@@ -579,13 +577,16 @@ need a per-node reset on reuse should give `pool_scene`'s root a
 
 ### `ThemeProfile` scaling
 
-Live at 5 kinds (sprite/audio/particle/shader/post_fx) as parallel dictionaries;
-`collect_*_ids` is deduped through `collect_ids_of` but the `resolve_*` /
-`has_*` / `resolve_*_or_null` trios are still copy-paste. **Next new kind (6)
-triggers the refactor:** `@export var asset_tables: Dictionary` (`kind ->
-Dictionary`) + `@export var default_assets: Dictionary` + a generic
-`ThemeManager.resolve(p_kind, p_asset_id) -> Resource`, with the typed methods as
-thin wrappers. Its own task, not folded into a subsystem.
+**Decision (settled at kind 6, `music`).** `ThemeProfile` keeps an **explicit
+typed `@export var <kind>_assets: Dictionary` + `default_<kind>` per kind** — it
+reads far better in the inspector and in hand-edited `.tres` than an opaque
+`Dictionary` of `Dictionary`. The duplication that mattered was on the
+`ThemeManager` side, and that was removed instead: `resolve_with_ladder(...)` +
+`profile_asset_or_null(method, id)` + `profile_default_or_null(property)` make
+every `resolve_<kind>` / `has_<kind>` a one-or-two-liner. Adding a kind is now:
+one `ThemeProfile` export trio + `resolve_/collect_/update_from_`, one
+`ThemeManager` fallback export + `resolve_`/`has_` pair, one scanner
+`SUFFIX`/`KIND` + two branches. No further refactor planned.
 
 ### Event id constants — `EventIds` ✅ implemented
 

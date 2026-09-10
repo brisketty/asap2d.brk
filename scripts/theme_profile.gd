@@ -39,11 +39,19 @@ extends Resource
 		post_fx_assets = p_value
 		update_from_post_fx_assets()
 
+## StringName -> AudioStream (looped theme / stem sets). Separate from
+## `audio_assets` (one-shot SFX).
+@export var music_assets: Dictionary:
+	set(p_value):
+		music_assets = p_value
+		update_from_music_assets()
+
 @export var default_sprite: Texture2D
 @export var default_audio: AudioStream
 @export var default_particle: Resource
 @export var default_shader: ShaderMaterial
 @export var default_post_fx: ShaderMaterial
+@export var default_music: AudioStream
 
 
 func update_from_sprite_assets() -> void:
@@ -63,6 +71,10 @@ func update_from_shader_assets() -> void:
 
 
 func update_from_post_fx_assets() -> void:
+	pass # Hook for derived profiles that precompute lookup state.
+
+
+func update_from_music_assets() -> void:
 	pass # Hook for derived profiles that precompute lookup state.
 
 
@@ -96,6 +108,12 @@ func resolve_post_fx_or_null(p_asset_id: StringName) -> ShaderMaterial:
 	return post_fx_assets[p_asset_id] as ShaderMaterial
 
 
+func resolve_music_or_null(p_asset_id: StringName) -> AudioStream:
+	if not music_assets.has(p_asset_id):
+		return null
+	return music_assets[p_asset_id] as AudioStream
+
+
 func collect_sprite_ids() -> PackedStringArray:
 	return collect_ids_of(sprite_assets)
 
@@ -114,6 +132,10 @@ func collect_shader_ids() -> PackedStringArray:
 
 func collect_post_fx_ids() -> PackedStringArray:
 	return collect_ids_of(post_fx_assets)
+
+
+func collect_music_ids() -> PackedStringArray:
+	return collect_ids_of(music_assets)
 
 
 func collect_ids_of(p_asset_dictionary: Dictionary) -> PackedStringArray:
