@@ -115,26 +115,39 @@ Spec: §Subsystems A. Depends on: `NodePool`, `resolve_particle`. **✅ complete
 
 ## Phase 2 — World & Environment Subsystem (`WorldEnvironment2D`)
 
-Spec: §B. Depends on: `resolve_particle`, `resolve_shader`.
+Spec: §B. Depends on: `resolve_particle`, `resolve_shader`. **✅ complete**
+(7 suites / 78 checks green; editor import clean; demo + biome-switch smoke pass).
 
-- [ ] `ThemeManager.resolve_shader` + `has_shader`; scanner `SHADER_ID_SUFFIX`.
-- [ ] `autoloads/world_environment_2d.gd` — listen `biome.entered` /
-  `biome.exited`; on enter, prefer
-  `ThemeManager.set_active_profile_by_id(context.source_id)` then rebuild own
-  layers.
-- [ ] `prefabs/parallax_rig.{gd,tscn}` — `ParallaxBackground` +
-  configurable-count `ParallaxLayer`s; textures via `*_sprite_asset_id`; scroll
-  scales via `@export`.
-- [ ] `prefabs/ambient_particle_layer.{gd,tscn}` — looped `GPUParticles2D` on a
-  `CanvasLayer`; material via `*_particle_asset_id`.
-- [ ] `prefabs/screen_shader_overlay.{gd,tscn}` — full-screen `ColorRect` +
-  `ShaderMaterial` for god rays / heat haze; material via `*_shader_asset_id`;
-  intensity `@export`; missing shader → hidden.
-- [ ] Animated-tile helper: `prefabs/animated_tile_driver.gd` (advances
-  `TileMapLayer` animation or swaps `TileSet` via `*_tileset_asset_id`).
-- [ ] `biome_profile` schema note in spec (which ids a biome profile must carry).
-- [ ] Register autoload; `scenes/demo_world.tscn`; `tests/test_world_environment.gd`
-  (biome id → resolved layer/particle/shader id set).
+- [x] `ThemeManager.resolve_shader` + `has_shader` + `profile_fallback_shader`;
+  `ThemeProfile.shader_assets` + `default_shader` + `resolve_shader_or_null` +
+  `collect_shader_ids` (now via `collect_ids_of`); scanner `SHADER_ID_SUFFIX` /
+  `SHADER_KIND` + branches; `ThemeManager.get_active_profile_id()`.
+- [x] `autoloads/world_environment_2d.gd` — `WorldEnvironment2DSubsystem` /
+  autoload `WorldEnvironment2D`; `biome.entered` → optional profile switch (via
+  `WorldTranslation.should_switch_profile`) + rebuild; `biome.exited` → teardown;
+  also rebuilds on `active_profile_changed` (`is_rebuilding` guard).
+- [x] `scripts/world_translation.gd` (`WorldTranslation`, autoload-free static:
+  `build_scroll_scales`, `resolve_layer_textures`, `should_switch_profile`).
+- [x] `prefabs/parallax_rig.{gd,tscn}` — `ParallaxRig extends ParallaxBackground`;
+  `configure(textures, scroll_scales)` rebuilds `ParallaxLayer` + tiling
+  `Sprite2D` per texture; ids `world.parallax.{far,mid,near}`.
+- [x] `prefabs/ambient_particle_layer.{gd,tscn}` — `AmbientParticleLayer`;
+  `configure(material)`; id `world.ambient`; null → emission stops.
+- [x] `prefabs/screen_shader_overlay.{gd,tscn}` — `ScreenShaderOverlay`;
+  `configure(shader_material)`; id `world.overlay`; null → `ColorRect` hidden.
+- [x] Register autoload; `scenes/demo_world.{gd,tscn}` (forest/cave/exit + panning
+  camera + two biome profiles + `biome_tint.gdshader`);
+  `tests/test_world_environment.gd` (15 checks).
+
+### Phase 2 follow-ups
+
+- [ ] Animated tiles: `AnimatedTileDriver` + a `tileset` asset kind
+  (`ThemeManager.resolve_tileset` / `has_tileset`, scanner `TILESET_ID_SUFFIX`).
+  Deferred — `TileMapLayer` animation is a rabbit hole and cleanly separable.
+- [ ] `biome_profile` still uses fixed constant ids in the subsystem, not
+  `@export`s (autoload can't wire exports) — same limitation as the impact
+  intensity table; the "scan `.tres`/`Resource` arrays" follow-up covers making
+  them telemetry-visible.
 
 ---
 
@@ -259,6 +272,23 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 2: World & Environment
+
+`WorldEnvironment2D` autoload + `WorldTranslation` (pure); `ParallaxRig` /
+`AmbientParticleLayer` / `ScreenShaderOverlay` prefabs; `shader` asset kind
+across `ThemeProfile` / `ThemeManager` / `AssetIdScanner`; `demo_world` with
+forest/cave profiles + `biome_tint.gdshader`; `test_world_environment` (15).
+7 suites / 78 checks green. Smoke: forest→cave→exit rebuilds/tears down layers,
+ambient particles, and the overlay; forest's missing `world.ambient` mapping
+falls back cleanly (no emission, no error).
+
+- Subsystem resolves a **fixed** id set (`world.parallax.*`, `world.ambient`,
+  `world.overlay`) — the active `ThemeProfile` maps those per biome. `biome.entered`
+  switches the profile so all subsystems re-theme, not just this one.
+- `collect_*_ids` deduped into `collect_ids_of(Dictionary)` while adding the 4th
+  kind. Generic `resolve(kind, id)` refactor trigger bumped to 6+ kinds.
+- Animated tiles + `tileset` kind deferred (Phase 2 follow-up).
 
 ### 2026-09-10 — Phase 1: Impact & Combat VFX
 

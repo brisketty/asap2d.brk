@@ -23,7 +23,7 @@ sensory presentation.
 | --- | --- | --- |
 | `Utility` | `scripts/utility.gd` | `is_object_valid`, `make_spatial_context` |
 | `EventBus` (autoload) | `autoloads/event_bus.gd` | `emit_semantic_event(id, context)` / `semantic_event_emitted` |
-| `ThemeManager` (autoload) | `autoloads/theme_manager.gd` | `resolve_sprite` / `resolve_audio` with fallback ladder |
+| `ThemeManager` (autoload) | `autoloads/theme_manager.gd` | `resolve_{sprite,audio,particle,shader}` with fallback ladder |
 | `ThemeProfile` | `scripts/theme_profile.gd` | id → asset maps + per-profile defaults |
 | `AssetIdScanner` | `scripts/asset_id_scanner.gd` | scene scan → artist worklist |
 
@@ -52,9 +52,9 @@ Each downgrade logs once via `printerr`. `resolve_audio(id)` mirrors this.
 
 Presentation scripts expose ids as `@export` vars with these suffixes:
 
-- `*_sprite_asset_id` — resolved through `ThemeManager.resolve_sprite`
-- `*_audio_asset_id` — resolved through `ThemeManager.resolve_audio`
-- `*_event_id` — an `EventBus` semantic event id
+- `*_sprite_asset_id` / `*_audio_asset_id` / `*_particle_asset_id` /
+  `*_shader_asset_id` — resolved through `ThemeManager.resolve_<kind>`
+- `*_event_id` — an `EventBus` semantic event id (use an `EventIds` constant)
 
 ### Generating the artist worklist
 
@@ -93,6 +93,8 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
 - **Impact & Combat VFX** (`ImpactVfx`) — ✅ pooled particle bursts, hit-stop,
   `HitFlash` / `KnockbackReceiver` / `SquashStretch` components.
   Demo: `scenes/demo_impact_vfx.tscn`.
-- World & Environment · Camera & Post-Processing · UI & HUD Polish ·
-  Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing — planned
-  (see `REMAINING_TASKS.md`).
+- **World & Environment** (`WorldEnvironment2D`) — ✅ biome-driven parallax rig,
+  ambient particle layer, full-screen shader overlay; switches the active
+  `ThemeProfile` per biome. Demo: `scenes/demo_world.tscn`.
+- Camera & Post-Processing · UI & HUD Polish · Polyphonic Audio (SFX) ·
+  BGM & Ambience · Audio Bus / Mixing — planned (see `REMAINING_TASKS.md`).

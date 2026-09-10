@@ -7,6 +7,7 @@ class StubThemeManager:
 	var mapped_sprites: PackedStringArray = []
 	var mapped_audio: PackedStringArray = []
 	var mapped_particles: PackedStringArray = []
+	var mapped_shaders: PackedStringArray = []
 
 	func has_sprite(p_asset_id: StringName) -> bool:
 		return mapped_sprites.has(String(p_asset_id))
@@ -17,6 +18,9 @@ class StubThemeManager:
 	func has_particle(p_asset_id: StringName) -> bool:
 		return mapped_particles.has(String(p_asset_id))
 
+	func has_shader(p_asset_id: StringName) -> bool:
+		return mapped_shaders.has(String(p_asset_id))
+
 
 func _initialize() -> void:
 	var failure_count := 0
@@ -24,6 +28,7 @@ func _initialize() -> void:
 	failure_count += expect_true("sprite suffix classified", AssetIdScanner.classify_property("node_x_sprite_asset_id") == AssetIdScanner.SPRITE_KIND)
 	failure_count += expect_true("audio suffix classified", AssetIdScanner.classify_property("boom_audio_asset_id") == AssetIdScanner.AUDIO_KIND)
 	failure_count += expect_true("particle suffix classified", AssetIdScanner.classify_property("burst_particle_asset_id") == AssetIdScanner.PARTICLE_KIND)
+	failure_count += expect_true("shader suffix classified", AssetIdScanner.classify_property("haze_shader_asset_id") == AssetIdScanner.SHADER_KIND)
 	failure_count += expect_true("event suffix classified", AssetIdScanner.classify_property("hit_event_id") == AssetIdScanner.EVENT_KIND)
 	failure_count += expect_true("unrelated property ignored", AssetIdScanner.classify_property("position") == &"")
 

@@ -25,9 +25,16 @@ extends Resource
 		particle_assets = p_value
 		update_from_particle_assets()
 
+## StringName -> ShaderMaterial.
+@export var shader_assets: Dictionary:
+	set(p_value):
+		shader_assets = p_value
+		update_from_shader_assets()
+
 @export var default_sprite: Texture2D
 @export var default_audio: AudioStream
 @export var default_particle: Resource
+@export var default_shader: ShaderMaterial
 
 
 func update_from_sprite_assets() -> void:
@@ -39,6 +46,10 @@ func update_from_audio_assets() -> void:
 
 
 func update_from_particle_assets() -> void:
+	pass # Hook for derived profiles that precompute lookup state.
+
+
+func update_from_shader_assets() -> void:
 	pass # Hook for derived profiles that precompute lookup state.
 
 
@@ -60,22 +71,30 @@ func resolve_particle_or_null(p_asset_id: StringName) -> Resource:
 	return particle_assets[p_asset_id] as Resource
 
 
+func resolve_shader_or_null(p_asset_id: StringName) -> ShaderMaterial:
+	if not shader_assets.has(p_asset_id):
+		return null
+	return shader_assets[p_asset_id] as ShaderMaterial
+
+
 func collect_sprite_ids() -> PackedStringArray:
-	var ids := PackedStringArray()
-	for key: Variant in sprite_assets.keys():
-		ids.append(String(key))
-	return ids
+	return collect_ids_of(sprite_assets)
 
 
 func collect_audio_ids() -> PackedStringArray:
-	var ids := PackedStringArray()
-	for key: Variant in audio_assets.keys():
-		ids.append(String(key))
-	return ids
+	return collect_ids_of(audio_assets)
 
 
 func collect_particle_ids() -> PackedStringArray:
+	return collect_ids_of(particle_assets)
+
+
+func collect_shader_ids() -> PackedStringArray:
+	return collect_ids_of(shader_assets)
+
+
+func collect_ids_of(p_asset_dictionary: Dictionary) -> PackedStringArray:
 	var ids := PackedStringArray()
-	for key: Variant in particle_assets.keys():
+	for key: Variant in p_asset_dictionary.keys():
 		ids.append(String(key))
 	return ids

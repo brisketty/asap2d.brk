@@ -140,13 +140,15 @@ thing.
 - `@export var particle_assets: Dictionary` (`StringName -> Resource`:
   `ParticleProcessMaterial` or `PackedScene`), setter →
   `update_from_particle_assets()`.
+- `@export var shader_assets: Dictionary` (`StringName -> ShaderMaterial`),
+  setter → `update_from_shader_assets()`.
 - `@export var default_sprite: Texture2D`, `default_audio: AudioStream`,
-  `default_particle: Resource`
-- `resolve_sprite_or_null` / `resolve_audio_or_null` / `resolve_particle_or_null`
-  `(p_asset_id)` — raw lookup, **no fallback** (the manager applies and logs the
-  fallback so it happens once, centrally).
-- `collect_sprite_ids()` / `collect_audio_ids()` / `collect_particle_ids()`
-  `-> PackedStringArray` — for tooling.
+  `default_particle: Resource`, `default_shader: ShaderMaterial`
+- `resolve_{sprite,audio,particle,shader}_or_null(p_asset_id)` — raw lookup, **no
+  fallback** (the manager applies and logs the fallback so it happens once,
+  centrally).
+- `collect_{sprite,audio,particle,shader}_ids() -> PackedStringArray` — thin
+  wrappers over `collect_ids_of(Dictionary)`, for tooling.
 
 **Growth (see Cross-cutting).** Each new asset kind adds a parallel
 `<kind>_assets: Dictionary`, `default_<kind>`, `resolve_<kind>_or_null`,
@@ -163,22 +165,23 @@ single choke point for every asset lookup in the framework.
   - `@export var profile_fallback_sprite: Texture2D = preload("res://icon.svg")`
   - `@export var profile_fallback_audio: AudioStream`
   - `@export var profile_fallback_particle: Resource`
+  - `@export var profile_fallback_shader: ShaderMaterial`
 - `signal active_profile_changed(p_profile_id: StringName)`
 - `var active_profile: ThemeProfile` — setter → `update_from_active_profile()`
   which emits `active_profile_changed` with the new `profile_id` (or `&""`).
 - `_ready()` — if `active_profile` unset and `profile_available` non-empty, adopts
   element 0.
+- `get_active_profile_id() -> StringName` — `&""` when no valid profile.
 - `set_active_profile_by_id(p_profile_id: StringName) -> void` — early-return on
   no match (`printerr`).
 - `resolve_sprite(p_asset_id: StringName) -> Texture2D` — **never null**. Ladder:
   active-profile mapping → active-profile `default_sprite` →
   `profile_fallback_sprite`. `printerr` on each downgrade.
-- `resolve_audio(p_asset_id: StringName) -> AudioStream` /
-  `resolve_particle(p_asset_id: StringName) -> Resource` — same ladder; the final
-  fallback may be `null` if the project never configures
-  `profile_fallback_audio` / `profile_fallback_particle`.
-- `has_sprite` / `has_audio` / `has_particle` `(p_asset_id) -> bool` —
-  non-logging existence check against the active profile, for `AssetIdScanner`.
+- `resolve_audio -> AudioStream` / `resolve_particle -> Resource` /
+  `resolve_shader -> ShaderMaterial` — same ladder; the final fallback may be
+  `null` when the project never configures that `profile_fallback_*`.
+- `has_{sprite,audio,particle,shader}(p_asset_id) -> bool` — non-logging
+  existence check against the active profile, for `AssetIdScanner`.
 
 Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 
@@ -187,10 +190,9 @@ Subsystems that cache a resolved asset must re-pull on `active_profile_changed`.
 `@tool class_name AssetIdScanner`, `extends RefCounted`. Pure static methods
 (same shape as `BrisklanceSelfUpdater`).
 
-Constants: `SPRITE_ID_SUFFIX`/`AUDIO_ID_SUFFIX`/`PARTICLE_ID_SUFFIX`
-(`"_<kind>_asset_id"`), `EVENT_ID_SUFFIX := "_event_id"`,
-`SCENE_EXTENSION := ".tscn"`; kinds `SPRITE_KIND`/`AUDIO_KIND`/`PARTICLE_KIND`/
-`EVENT_KIND`.
+Constants: `{SPRITE,AUDIO,PARTICLE,SHADER}_ID_SUFFIX` (`"_<kind>_asset_id"`),
+`EVENT_ID_SUFFIX := "_event_id"`, `SCENE_EXTENSION := ".tscn"`; kinds
+`{SPRITE,AUDIO,PARTICLE,SHADER,EVENT}_KIND`.
 
 - `scan_directory(p_root_path: String) -> Array[Dictionary]` — recurse for
   `.tscn`, scan each.
@@ -337,8 +339,8 @@ A subsystem PR that introduces an id adds a row here.
 | sprite | `_sprite_asset_id` | `sprite_assets` | `Texture2D` | live |
 | audio | `_audio_asset_id` | `audio_assets` | `AudioStream` | live |
 | particle | `_particle_asset_id` | `particle_assets` | `ParticleProcessMaterial` / `PackedScene` (typed `Resource`) | live |
-| shader | `_shader_asset_id` | `shader_assets` | `ShaderMaterial` | planned (Phase 2) |
-| tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | planned (Phase 2) |
+| shader | `_shader_asset_id` | `shader_assets` | `ShaderMaterial` | live |
+| tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | planned (Phase 2 follow-up) |
 | post_fx | `_post_fx_asset_id` | `post_fx_assets` | `Environment` / `Material` | planned (Phase 3) |
 | music | `_music_asset_id` | `music_assets` | `AudioStream` (looped) | planned (Phase 6) |
 | bus_profile | `_bus_profile_asset_id` | `bus_profile_assets` | bus-effect config `Resource` | planned (Phase 7) |
@@ -395,19 +397,38 @@ Autoload `ImpactVfx`, `class_name ImpactVfxSubsystem` (`autoloads/impact_vfx.gd`
   scene node, so `AssetIdScanner` does not see them (it walks scenes only). A
   "scan exported `Resource` arrays" follow-up is in `REMAINING_TASKS.md`.
 
-### B. World & Environment Subsystem — `WorldEnvironment2D`
+### B. World & Environment Subsystem — `WorldEnvironment2D`  ✅ implemented (Phase 2)
 
-Biome-specific parallax layers, ambient particle loops, animated tiles, god rays,
-heat haze.
+Autoload `WorldEnvironment2D`, `class_name WorldEnvironment2DSubsystem`
+(`autoloads/world_environment_2d.gd`).
 
-- **Listens:** `biome.entered` / `biome.exited`.
-- On `biome.entered` with `context.source_id` = biome id, resolves a
-  `biome_profile` (parallax layer textures via `*_sprite_asset_id`, ambient
-  particle via `*_particle_asset_id`, god-ray / heat-haze via `*_shader_asset_id`)
-  and reconfigures a persistent `ParallaxBackground` + overlay `CanvasLayer`.
-- Prefer switching the **active `ThemeProfile`** to the biome, so every other
-  subsystem re-themes too; this subsystem then only rebuilds its own layer nodes.
-- **Prefabs:** `parallax_rig`, `ambient_particle_layer`, `screen_shader_overlay`.
+- **Listens:** `biome.entered` (`context.source_id` = biome id) and
+  `biome.exited`. Also re-themes on `ThemeManager.active_profile_changed` while a
+  biome is active (`is_rebuilding` guards the resulting re-entrancy).
+- On `biome.entered`: if `WorldTranslation.should_switch_profile(...)`, calls
+  `ThemeManager.set_active_profile_by_id(biome_id)` — so **every** subsystem
+  re-themes — then rebuilds its own three persistent children by resolving a
+  **fixed** set of abstract ids through the now-active profile:
+  - `PARALLAX_LAYER_IDS` = `world.parallax.{far,mid,near}` →
+    `ThemeManager.resolve_sprite` → `ParallaxRig.configure(textures, scroll_scales)`
+    (scales from `WorldTranslation.build_scroll_scales`, far=0.15 → near=1.0).
+  - `world.ambient` → `resolve_particle` → `AmbientParticleLayer.configure(...)`
+    (null → emission simply stops).
+  - `world.overlay` → `resolve_shader` → `ScreenShaderOverlay.configure(...)`
+    (null → the full-screen `ColorRect` hides).
+- On `biome.exited`: all three `configure`d empty/null.
+- **`WorldTranslation`** (`scripts/world_translation.gd`, autoload-free, static):
+  `build_scroll_scales`, `resolve_layer_textures`, `should_switch_profile`.
+  Unit-tested headless.
+- **Prefabs:** `parallax_rig` (`ParallaxBackground` subclass, rebuildable layer
+  stack with `motion_mirroring` tiling), `ambient_particle_layer` (`CanvasLayer`
+  + looping `GPUParticles2D`), `screen_shader_overlay` (`CanvasLayer` +
+  full-rect `ColorRect`).
+- **Demo:** `scenes/demo_world.tscn` — forest / cave / exit buttons, a panning
+  camera, two biome `ThemeProfile`s (`assets/theme_profile_{forest,cave}.tres`;
+  forest deliberately omits `world.ambient` to show the null-fallback).
+- **Deferred:** animated tiles / `AnimatedTileDriver` + a `tileset` asset kind —
+  a Phase 2 follow-up in `REMAINING_TASKS.md`.
 
 ### C. Camera & Post-Processing Subsystem — `CameraDirector`
 
@@ -505,12 +526,12 @@ need a per-node reset on reuse should give `pool_scene`'s root a
 
 ### `ThemeProfile` scaling
 
-Live at 3 kinds (sprite/audio/particle) as parallel dictionaries. At ~5+,
-refactor to `@export var asset_tables: Dictionary` (`StringName kind ->
+Live at 4 kinds (sprite/audio/particle/shader) as parallel dictionaries; the
+`collect_*_ids` boilerplate is already deduped through `collect_ids_of`. At ~6+
+kinds, refactor to `@export var asset_tables: Dictionary` (`StringName kind ->
 Dictionary`) + `@export var default_assets: Dictionary` and a generic
-`ThemeManager.resolve(p_kind, p_asset_id) -> Resource`; `resolve_sprite` /
-`resolve_audio` / `resolve_particle` become thin typed wrappers. Its own task,
-not folded into a subsystem.
+`ThemeManager.resolve(p_kind, p_asset_id) -> Resource`; the typed `resolve_*`
+methods become thin wrappers. Its own task, not folded into a subsystem.
 
 ### Event id constants — `EventIds` ✅ implemented
 

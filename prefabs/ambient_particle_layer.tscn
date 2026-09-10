@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://prefabs/ambient_particle_layer.gd" id="1"]
+
+[node name="AmbientParticleLayer" type="CanvasLayer" node_paths=PackedStringArray("node_particles")]
+script = ExtResource("1")
+node_particles = NodePath("Particles")
+
+[node name="Particles" type="GPUParticles2D" parent="."]
+position = Vector2(576, 324)
+emitting = false
+amount = 64
+lifetime = 4.0
+preprocess = 2.0

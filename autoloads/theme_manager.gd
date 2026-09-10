@@ -16,6 +16,9 @@ signal active_profile_changed(p_profile_id: StringName)
 ## Last-resort particle material / scene when the active ThemeProfile has no
 ## `default_particle`.
 @export var profile_fallback_particle: Resource
+## Last-resort shader material when the active ThemeProfile has no
+## `default_shader`.
+@export var profile_fallback_shader: ShaderMaterial
 
 var active_profile: ThemeProfile:
 	set(p_value):
@@ -33,6 +36,12 @@ func update_from_active_profile() -> void:
 	if Utility.is_object_valid(active_profile):
 		profile_id = active_profile.profile_id
 	active_profile_changed.emit(profile_id)
+
+
+func get_active_profile_id() -> StringName:
+	if not Utility.is_object_valid(active_profile):
+		return &""
+	return active_profile.profile_id
 
 
 func set_active_profile_by_id(p_profile_id: StringName) -> void:
@@ -88,6 +97,20 @@ func resolve_particle(p_asset_id: StringName) -> Resource:
 	return profile_fallback_particle
 
 
+## May return null: no default shader is configured out of the box.
+func resolve_shader(p_asset_id: StringName) -> ShaderMaterial:
+	if Utility.is_object_valid(active_profile):
+		var found := active_profile.resolve_shader_or_null(p_asset_id)
+		if Utility.is_object_valid(found):
+			return found
+		var profile_default := active_profile.default_shader
+		if Utility.is_object_valid(profile_default):
+			printerr("ThemeManager: shader '%s' missing, using profile default." % p_asset_id)
+			return profile_default
+	printerr("ThemeManager: shader '%s' missing, using engine fallback." % p_asset_id)
+	return profile_fallback_shader
+
+
 ## Non-logging existence check across the active profile, for tooling.
 func has_sprite(p_asset_id: StringName) -> bool:
 	if not Utility.is_object_valid(active_profile):
@@ -105,3 +128,9 @@ func has_particle(p_asset_id: StringName) -> bool:
 	if not Utility.is_object_valid(active_profile):
 		return false
 	return Utility.is_object_valid(active_profile.resolve_particle_or_null(p_asset_id))
+
+
+func has_shader(p_asset_id: StringName) -> bool:
+	if not Utility.is_object_valid(active_profile):
+		return false
+	return Utility.is_object_valid(active_profile.resolve_shader_or_null(p_asset_id))
