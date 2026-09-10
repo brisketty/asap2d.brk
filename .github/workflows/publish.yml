@@ -1,0 +1,39 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Zip module
+        working-directory: ${{ github.workspace }}/addons/brisklance/self
+        run: zip -r ${{ github.workspace }}/brisklance_module.zip ./*
+
+      - name: Zip manager
+        working-directory: ${{ github.workspace }}/addons/brisklance
+        run: zip -r ${{ github.workspace }}/brisklance_manager.zip manager
+
+      - name: Zip suite
+        working-directory: ${{ github.workspace }}/addons/brisklance
+        run: zip -r ${{ github.workspace }}/brisklance.zip ./*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{ github.workspace }}/brisklance_module.zip
+            ${{ github.workspace }}/brisklance_manager.zip
+            ${{ github.workspace }}/brisklance.zip
+            
