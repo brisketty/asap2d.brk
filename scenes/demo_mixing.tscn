@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/demo_mixing.gd" id="1"]
+
+[node name="MixingDemo" type="Node2D" node_paths=PackedStringArray("node_play_button", "node_cave_button", "node_hall_button", "node_dry_button", "node_sfx_timer")]
+script = ExtResource("1")
+node_play_button = NodePath("Ui/VBox/PlayButton")
+node_cave_button = NodePath("Ui/VBox/CaveButton")
+node_hall_button = NodePath("Ui/VBox/HallButton")
+node_dry_button = NodePath("Ui/VBox/DryButton")
+node_sfx_timer = NodePath("SfxTimer")
+
+[node name="SfxTimer" type="Timer" parent="."]
+wait_time = 0.4
+
+[node name="Ui" type="CanvasLayer" parent="."]
+
+[node name="VBox" type="VBoxContainer" parent="Ui"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 240.0
+offset_bottom = 180.0
+
+[node name="PlayButton" type="Button" parent="Ui/VBox"]
+text = "Play SFX (loop)"
+
+[node name="CaveButton" type="Button" parent="Ui/VBox"]
+text = "biome.entered: cave"
+
+[node name="HallButton" type="Button" parent="Ui/VBox"]
+text = "biome.entered: hall"
+
+[node name="DryButton" type="Button" parent="Ui/VBox"]
+text = "biome.exited (dry)"

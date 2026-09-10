@@ -1,0 +1,46 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/demo_camera.gd" id="1"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2"]
+[ext_resource type="Resource" path="res://assets/theme_profile_complete.tres" id="3"]
+
+[node name="CameraDemo" type="Node2D" node_paths=PackedStringArray("node_player", "node_crit_button", "node_shake_button", "node_hurt_button", "node_clear_button", "node_zoom_in_button", "node_zoom_out_button")]
+script = ExtResource("1")
+profile_available = [ExtResource("3")]
+node_player = NodePath("Player")
+node_crit_button = NodePath("Ui/VBox/CritButton")
+node_shake_button = NodePath("Ui/VBox/ShakeButton")
+node_hurt_button = NodePath("Ui/VBox/HurtButton")
+node_clear_button = NodePath("Ui/VBox/ClearButton")
+node_zoom_in_button = NodePath("Ui/VBox/ZoomInButton")
+node_zoom_out_button = NodePath("Ui/VBox/ZoomOutButton")
+
+[node name="Player" type="Sprite2D" parent="."]
+position = Vector2(576, 324)
+texture = ExtResource("2")
+
+[node name="Ui" type="CanvasLayer" parent="."]
+
+[node name="VBox" type="VBoxContainer" parent="Ui"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 200.0
+offset_bottom = 240.0
+
+[node name="CritButton" type="Button" parent="Ui/VBox"]
+text = "impact.crit (trauma)"
+
+[node name="ShakeButton" type="Button" parent="Ui/VBox"]
+text = "camera.shake"
+
+[node name="HurtButton" type="Button" parent="Ui/VBox"]
+text = "state.hurt"
+
+[node name="ClearButton" type="Button" parent="Ui/VBox"]
+text = "state.clear"
+
+[node name="ZoomInButton" type="Button" parent="Ui/VBox"]
+text = "camera.zoom in"
+
+[node name="ZoomOutButton" type="Button" parent="Ui/VBox"]
+text = "camera.zoom reset"

@@ -17,6 +17,19 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="Brisklance"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/foundation_demo.tscn"
+
+[autoload]
+
+EventBus="*res://autoloads/event_bus.gd"
+ThemeManager="*res://autoloads/theme_manager.gd"
+ImpactVfx="*res://autoloads/impact_vfx.gd"
+WorldEnvironment2D="*res://autoloads/world_environment_2d.gd"
+CameraDirector="*res://autoloads/camera_director.gd"
+HudPolish="*res://autoloads/hud_polish.gd"
+SfxPlayer="*res://autoloads/sfx_player.gd"
+MusicDirector="*res://autoloads/music_director.gd"
+AudioMixing="*res://autoloads/audio_mixing.gd"
 
 [editor_plugins]
 
