@@ -99,5 +99,8 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
 - **Camera & Post-Processing** (`CameraDirector`) — ✅ trauma-based screen shake,
   zoom/focus tweens, state-driven post-FX grades (hurt vignette). Owns the
   `Camera2D`; gameplay calls `set_followed(node)`. Demo: `scenes/demo_camera.tscn`.
-- UI & HUD Polish · Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing
-  — planned (see `REMAINING_TASKS.md`).
+- **UI & HUD Polish** (`HudPolish`) — ✅ pooled floating damage/heal numbers,
+  `CatchUpBar` (trailing-fill health bar), `HoverPop`, a `Tweens` recipe library.
+  Demo: `scenes/demo_hud.tscn`.
+- Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing — planned
+  (see `REMAINING_TASKS.md`).

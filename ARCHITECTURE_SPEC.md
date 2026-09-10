@@ -472,24 +472,36 @@ Autoload `CameraDirector`, `class_name CameraDirectorSubsystem`
 - **Deferred:** chromatic aberration is available as a shader parameter on the
   grade material but has no dedicated event yet.
 
-### D. UI & HUD Polish Subsystem — `HudPolish`
+### D. UI & HUD Polish Subsystem — `HudPolish`  ✅ implemented (Phase 4)
 
-Modular tweening components, catch-up health/mana bars, hover effects, floating
-damage text.
+Autoload `HudPolish`, `class_name HudPolishSubsystem`
+(`autoloads/hud_polish.gd`).
 
-- **Listens:** `damage.dealt` / `damage.healed` (floating text + bar catch-up),
-  `ui.hover` / `ui.confirm` / `ui.cancel` (widget feedback).
-- **Floating damage text:** pooled `Label` prefab, spawned at
-  `context.position` projected to screen space via the current camera, animated
-  by a reusable `Tweener` component; number/colour driven by `context.magnitude`
-  and an `impact.*` sub-id.
-- **Catch-up bars:** `CatchUpBar` prefab — two `TextureProgressBar`s (instant +
-  lerped trailing), driven by a value the HUD *pushes* (`bar.set_ratio(x)`); the
-  subsystem wires `damage.*` → the right bar via a registration map.
-- **Tweening:** `/prefabs/tween` component library (`PopTween`, `ShakeTween`,
-  `FadeTween`) usable standalone by any UI scene.
-- **Assets:** bar fill/underlay `*_sprite_asset_id`, font via a `*_sprite_asset_id`
-  analogue or a dedicated `font` kind.
+- **Listens:** `damage.dealt` / `damage.healed` → spawn a pooled floating number
+  at `context.position`; if `context.source_id` names a registered bar and
+  `context.ratio` is present, also push that ratio.
+- **`HudTranslation`** (`scripts/hud_translation.gd`, autoload-free static):
+  `damage_text(magnitude, event_id)` (`"12"` / `"+5"`), `damage_color(...)`
+  (heal green; magnitude tiers light/heavy/severe), `catch_up_step(...)` (the
+  lerp). Unit-tested headless.
+- **`FloatingDamageText`** (`prefabs/floating_damage_text.{gd,tscn}`,
+  `extends Node2D`) — **world-space** (rendered by the CameraDirector camera, no
+  screen projection), pooled via `NodePool`, `play(text, color)` rises and
+  fades, then `finished` → the pool reclaims it (`CONNECT_ONE_SHOT`).
+- **`CatchUpBar`** (`prefabs/catch_up_bar.{gd,tscn}`, `extends Control`) —
+  standalone: a front `ProgressBar` that snaps to the pushed `set_ratio(x)` over
+  a trailing bar that eases via `HudTranslation.catch_up_step` (snaps forward on
+  a heal so it never lags growth). `HudPolish.register_bar(id, bar)` /
+  `push_bar_ratio(id, ratio)` route to it by id.
+- **`HoverPop`** (`prefabs/hover_pop.{gd,tscn}`) — attach to a `Control`; pops it
+  on `mouse_entered` and optionally emits `ui.hover`.
+- **`Tweens`** (`scripts/tweens.gd`, `class_name Tweens`, static) — reusable
+  recipes (`pop`, `fade_out`, `rise_and_fade`, `shake`) any scene can call.
+- **Demo:** `scenes/demo_hud.tscn` — damage/heal buttons, bar ±ratio buttons, a
+  `HoverPop` on the crit button.
+- **Deferred:** a dedicated `font` asset kind (floating text uses the project
+  theme font); `ui.confirm`/`ui.cancel` widget feedback; screen-space (vs
+  world-space) floating text option.
 
 ### E. Polyphonic Audio Subsystem (SFX) — `SfxPlayer`
 

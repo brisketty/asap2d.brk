@@ -187,23 +187,36 @@ green; editor import clean; demo + camera runtime smoke pass).
 
 ## Phase 4 — UI & HUD Polish Subsystem (`HudPolish`)
 
-Spec: §D. Depends on: `NodePool`, a camera for world→screen projection.
+Spec: §D. Depends on: `NodePool`, `CameraDirector`. **✅ complete** (10 suites /
+109 checks green; editor import clean; demo + HUD runtime smoke pass).
 
-- [ ] `prefabs/tween/` component library — `PopTween`, `ShakeTween`, `FadeTween`
-  (standalone, reusable). Headless test for each easing.
-- [ ] `autoloads/hud_polish.gd` — listen `damage.dealt`/`damage.healed`,
-  `ui.hover`/`ui.confirm`/`ui.cancel`.
-- [ ] `prefabs/floating_damage_text.{gd,tscn}` — pooled `Label`; spawn at
-  `context.position` projected to screen; number/colour from `context.magnitude`
-  + `impact.*` sub-id; animated by `PopTween` + `FadeTween`.
-- [ ] `prefabs/catch_up_bar.{gd,tscn}` — instant + trailing `TextureProgressBar`;
-  `set_ratio(p_value)` push API; `@export` catch-up speed; fills via
-  `*_sprite_asset_id`.
-- [ ] Registration map: `damage.*` source id → target `CatchUpBar`.
-- [ ] Hover-effect component `prefabs/hover_pop.gd` for arbitrary `Control`s.
-- [ ] Font handling decision (dedicated `font` kind vs sprite-analogue).
-- [ ] Register autoload; `scenes/demo_hud.tscn`; `tests/test_hud_polish.gd`
-  (magnitude→text/colour mapping; bar catch-up lerp math).
+- [x] `scripts/tweens.gd` (`Tweens`, static recipes: `pop`, `fade_out`,
+  `rise_and_fade`, `shake`). Kept as a static utility rather than Node
+  components - equally reusable, no scene overhead.
+- [x] `autoloads/hud_polish.gd` — `HudPolishSubsystem` / autoload `HudPolish`;
+  `damage.dealt`/`damage.healed` → pooled floating number + optional bar push;
+  `register_bar` / `unregister_bar` / `push_bar_ratio`.
+- [x] `scripts/hud_translation.gd` (`HudTranslation`, autoload-free static:
+  `damage_text`, `damage_color`, `catch_up_step`, `is_heal`).
+- [x] `prefabs/floating_damage_text.{gd,tscn}` — **world-space** `Node2D` + Label
+  (no screen projection needed - the camera renders it), pooled, rise+fade via
+  `Tweens.rise_and_fade`, `finished` → pool release (`CONNECT_ONE_SHOT`).
+- [x] `prefabs/catch_up_bar.{gd,tscn}` — front `ProgressBar` (snap) over trailing
+  `ProgressBar` (eased); `set_ratio()` push API; `@export catch_up_speed`;
+  snaps forward on heal.
+- [x] Registration map (`bars_by_id`) + `push_bar_ratio(id, ratio)`.
+- [x] `prefabs/hover_pop.{gd,tscn}` — `HoverPop` for any `Control`; pops +
+  optional `ui.hover` emit.
+- [x] Register autoload; `scenes/demo_hud.{gd,tscn}`; `tests/test_hud_polish.gd`
+  (15 checks).
+
+### Phase 4 follow-ups
+
+- [ ] Dedicated `font` asset kind (floating text uses the project theme font).
+- [ ] `ui.confirm` / `ui.cancel` widget feedback (only `ui.hover` wired).
+- [ ] Screen-space floating-text option (current is world-space, so it shakes /
+  zooms with the camera).
+- [ ] Bar fills via `*_sprite_asset_id` (`ProgressBar` is untextured for now).
 
 ---
 
@@ -283,6 +296,23 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 4: UI & HUD Polish
+
+`HudPolish` autoload + `HudTranslation` (pure) + `Tweens` recipes;
+`FloatingDamageText` (pooled, world-space), `CatchUpBar`, `HoverPop` prefabs;
+`demo_hud`; `test_hud_polish` (15). 9 suites / 109 checks green. Smoke:
+`damage.dealt` acquires a pooled number → releases after its lifetime;
+`set_ratio(0.4)` snaps the front bar, trail eases down and catches up.
+
+- Floating text is **world-space** (`Node2D`), not screen-projected — simplest,
+  and the CameraDirector camera already renders it. Trade-off: it shakes/zooms
+  with the camera; a screen-space option is a follow-up.
+- `Tweens` shipped as a static recipe utility (`scripts/`), not Node components —
+  callable from anywhere, `p_node.create_tween()` needs only that the node is in
+  the tree.
+- `font` asset kind deferred; no 6th kind yet, so the generic
+  `ThemeManager.resolve(kind,id)` refactor is still pending its trigger.
 
 ### 2026-09-10 — Phase 3: Camera & Post-Processing
 
