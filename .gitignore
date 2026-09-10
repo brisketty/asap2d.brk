@@ -2,6 +2,10 @@
 .godot/
 /android/
 
+# Exported builds, but keep the generated asset worklist (CI diffs it).
+/exports/*
+!/exports/asset_worklist.md
+
 .DS_Store
 **/.DS_Store
 
