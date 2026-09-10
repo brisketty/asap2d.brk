@@ -27,6 +27,7 @@ ImpactVfx="*res://autoloads/impact_vfx.gd"
 WorldEnvironment2D="*res://autoloads/world_environment_2d.gd"
 CameraDirector="*res://autoloads/camera_director.gd"
 HudPolish="*res://autoloads/hud_polish.gd"
+SfxPlayer="*res://autoloads/sfx_player.gd"
 
 [editor_plugins]
 

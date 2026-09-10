@@ -102,5 +102,7 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
 - **UI & HUD Polish** (`HudPolish`) — ✅ pooled floating damage/heal numbers,
   `CatchUpBar` (trailing-fill health bar), `HoverPop`, a `Tweens` recipe library.
   Demo: `scenes/demo_hud.tscn`.
-- Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing — planned
-  (see `REMAINING_TASKS.md`).
+- **Polyphonic Audio / SFX** (`SfxPlayer`) — ✅ route table, pooled positional +
+  dry voices, per-voice pitch/volume randomisation, orphan-clip safety on scene
+  change. Demo: `scenes/demo_sfx.tscn`.
+- BGM & Ambience · Audio Bus / Mixing — planned (see `REMAINING_TASKS.md`).

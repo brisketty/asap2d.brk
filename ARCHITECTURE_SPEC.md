@@ -505,20 +505,36 @@ Autoload `HudPolish`, `class_name HudPolishSubsystem`
 
 ### E. Polyphonic Audio Subsystem (SFX) — `SfxPlayer`
 
-Positional, pooled one-shots with automatic pitch/volume randomisation, orphan
-safety across scene swaps.
+Autoload `SfxPlayer`, `class_name SfxPlayerSubsystem` (`autoloads/sfx_player.gd`).
+✅ implemented (Phase 5)
 
-- **Listens:** every gameplay/`ui.*` event that has an `*_audio_asset_id` mapping.
-  A small `@export` route table maps `event_id → audio_asset_id + spatialization`.
-- **Pool:** `AudioStreamPlayer2D` pool (positional) + `AudioStreamPlayer` pool
-  (dry / UI). `acquire`, set stream from `ThemeManager.resolve_audio`, randomise
-  `pitch_scale` (±semitones) and `volume_db` (±range) from per-route `@export`s,
-  play, auto-`release` on `finished`.
-- **Orphan safety:** the pool lives under the subsystem autoload (never freed on
-  scene change); on `SceneTree` change, in-flight players either finish
-  (`reparent` to the pool) or are force-released — configurable per route
-  (`stop_on_scene_change`).
-- **Assets:** `*_audio_asset_id`.
+- **Route table:** `@export Array[SfxRoute]` (`route_event_id`,
+  `route_audio_asset_id`, `route_spatialized`, `route_pitch_semitones`,
+  `route_volume_db_range`, `route_stop_on_scene_change`). Empty → defaults
+  (`impact.*` positional, `ui.*` dry). An explicit table **replaces** the
+  defaults.
+- **`SfxTranslation`** (`scripts/sfx_translation.gd`, autoload-free static):
+  `build_lookup`, `build_default_route_table`, `resolve_route`,
+  `random_pitch_scale(semitones, unit)` (`2^(unit·semitones/12)`),
+  `random_volume_db(range, unit)`, `should_keep_on_scene_change`. Unit-tested.
+- **`SfxVoicePool`** (`prefabs/sfx_voice_pool.{gd,tscn}`) — wraps a `NodePool` of
+  a voice scene (`sfx_voice_2d.tscn` = `AudioStreamPlayer2D` on bus `SFX`, or
+  `sfx_voice_ui.tscn` = `AudioStreamPlayer` on bus `UI`). `play(stream, pitch,
+  volume_db, position, keep)` acquires, configures (via `.set()` so one code
+  path serves both voice classes), plays, auto-releases on `finished`
+  (`CONNECT_ONE_SHOT`). A null stream (missing asset, no fallback) → no-op.
+- **Subsystem:** on a routed event, `ThemeManager.resolve_audio(route id)`,
+  randomise pitch/volume with a per-instance `RandomNumberGenerator`, dispatch to
+  the positional or UI pool by `route_spatialized`.
+- **Orphan safety:** both pools live under the autoload, so voices survive scene
+  changes automatically. `SfxPlayer.notify_scene_change()` (call before
+  `change_scene`) → `pool.stop_transient()` cuts only voices whose route set
+  `route_stop_on_scene_change` (tagged via `set_meta`); the rest play out.
+- **Bus layout:** `default_bus_layout.tres` now defines `Master / Music /
+  Ambience / SFX / UI` (Phase 7 adds effects + sends).
+- **Demo:** `scenes/demo_sfx.tscn` — light/heavy/hover/burst buttons over a
+  code-built `ThemeProfile` of procedural tones (`ToneStream`, a demo/test
+  helper).
 
 ### F. BGM & Ambience Subsystem — `MusicDirector`
 

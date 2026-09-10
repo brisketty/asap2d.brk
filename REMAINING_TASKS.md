@@ -222,23 +222,35 @@ Spec: §D. Depends on: `NodePool`, `CameraDirector`. **✅ complete** (10 suites
 
 ## Phase 5 — Polyphonic Audio Subsystem / SFX (`SfxPlayer`)
 
-Spec: §E. Depends on: `NodePool`, Phase 7 bus layout (soft — can start on
-default buses).
+Spec: §E. Depends on: `NodePool`. **✅ complete** (11 suites / 124 checks green;
+editor import clean; demo + SFX runtime smoke pass).
 
-- [ ] `autoloads/sfx_player.gd` — `@export` route table:
-  `event_id → { audio_asset_id, spatialized: bool, pitch_semitones: float,
-  volume_db_range: float, stop_on_scene_change: bool }`.
-- [ ] `prefabs/sfx_player_2d_pool.{gd,tscn}` — `AudioStreamPlayer2D` `NodePool`
-  (positional).
-- [ ] `prefabs/sfx_player_ui_pool.{gd,tscn}` — `AudioStreamPlayer` `NodePool`
-  (dry / UI bus).
-- [ ] Play path: acquire → stream from `ThemeManager.resolve_audio` → randomise
-  `pitch_scale` / `volume_db` from route → play → auto-release on `finished`.
-- [ ] Orphan safety: pools parented under the autoload; on `SceneTree`
-  node-removed / scene change, in-flight players finish (reparented) or force
-  release per `stop_on_scene_change`.
-- [ ] Register autoload; `scenes/demo_sfx.tscn`; `tests/test_sfx_player.gd`
-  (route lookup; pitch/volume randomisation bounds; orphan-release decision).
+- [x] `autoloads/sfx_player.gd` — `SfxPlayerSubsystem` / autoload `SfxPlayer`;
+  `@export Array[SfxRoute]` (empty → `build_default_route_table`); dispatches to
+  the positional or UI pool by `route_spatialized`; per-instance `RNG`.
+- [x] `scripts/sfx_route.gd` (`SfxRoute` resource) +
+  `scripts/sfx_translation.gd` (`SfxTranslation`, autoload-free static:
+  lookup, default table, `random_pitch_scale` = `2^(unit·semitones/12)`,
+  `random_volume_db`, `should_keep_on_scene_change`).
+- [x] `prefabs/sfx_voice_pool.{gd,tscn}` — one `SfxVoicePool` script, two voice
+  scenes: `sfx_voice_2d.tscn` (`AudioStreamPlayer2D`, bus `SFX`) and
+  `sfx_voice_ui.tscn` (`AudioStreamPlayer`, bus `UI`). (Merged the two prefabs
+  from the task list — one script, `.set()`-based config serves both classes.)
+- [x] Play path: null-stream guard → acquire → configure → play → auto-release
+  on `finished` (`CONNECT_ONE_SHOT`).
+- [x] Orphan safety: pools under the autoload (voices survive scene changes);
+  `SfxPlayer.notify_scene_change()` → `stop_transient()` cuts only
+  `route_stop_on_scene_change` voices (tagged via `set_meta`).
+- [x] `default_bus_layout.tres` — `Master / Music / Ambience / SFX / UI`.
+- [x] Register autoload; `scenes/demo_sfx.{gd,tscn}` (+ `scripts/tone_stream.gd`
+  procedural-tone helper); `tests/test_sfx_player.gd` (15 checks).
+
+### Phase 5 follow-ups
+
+- [ ] Automatic scene-change detection (currently the game must call
+  `notify_scene_change()`).
+- [ ] Voice stealing / priority when a pool hits `pool_max_count` (currently
+  `NodePool` recycles the oldest, which may cut an important sound).
 
 ---
 
@@ -296,6 +308,23 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 5: Polyphonic Audio / SFX
+
+`SfxPlayer` autoload + `SfxTranslation` (pure) + `SfxRoute`; `SfxVoicePool`
+(one script, 2D + UI voice scenes); `default_bus_layout.tres` (5 buses);
+`ToneStream` helper; `demo_sfx`; `test_sfx_player` (15). 11 suites / 124 checks.
+Smoke: 3 positional + 1 UI voice acquired → `notify_scene_change()` cuts only
+the transient one → the rest play out and auto-release.
+
+- Merged the task list's two pool prefabs into one `SfxVoicePool` — `.set()` /
+  `.call()` on the voice `Node` serves both `AudioStreamPlayer2D` and
+  `AudioStreamPlayer` from one code path.
+- Orphan safety is mostly free: the pools live under the autoload, so voices
+  aren't in the scene that changes. Only the explicit "cut this on scene change"
+  case needs code (`stop_transient` + a `keep_on_scene_change` meta tag).
+- `default_bus_layout.tres` created here (Phase 7's territory) as a stub so
+  `SFX` / `UI` buses exist; Phase 7 adds effects and sends.
 
 ### 2026-09-10 — Phase 4: UI & HUD Polish
 
