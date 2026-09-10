@@ -56,6 +56,9 @@ Presentation scripts expose ids as `@export` vars with these suffixes:
   music / bus_profile / tileset — resolved through `ThemeManager.resolve_<kind>`
 - `*_event_id` — an `EventBus` semantic event id (use an `EventIds` constant)
 
+Every id the shipped framework resolves — the slots an artist fills per theme —
+is catalogued in [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md).
+
 ### Generating the artist worklist
 
 ```gdscript

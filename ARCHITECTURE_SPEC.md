@@ -339,6 +339,9 @@ A subsystem PR that introduces an id adds a row here.
 
 ### `ThemeProfile` schema per asset kind
 
+Every concrete id the shipped subsystems resolve — the slots to fill per theme —
+is catalogued in [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md).
+
 | Kind | Suffix | `ThemeProfile` field | `ThemeManager.resolve_*` returns | Status |
 | --- | --- | --- | --- | --- |
 | sprite | `_sprite_asset_id` | `sprite_assets` | `Texture2D` | live |

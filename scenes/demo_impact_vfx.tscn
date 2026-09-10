@@ -1,54 +1,59 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene format=3 uid="uid://2p8qogt7dqyq"]
 
-[ext_resource type="Script" path="res://scenes/demo_impact_vfx.gd" id="1"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="2"]
+[ext_resource type="Script" uid="uid://d1h6i8splot5c" path="res://scenes/demo_impact_vfx.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://dbqlcku17p7m" path="res://icon.svg" id="2"]
+[ext_resource type="Script" uid="uid://pyy2nyx8r0v5" path="res://scripts/theme_profile.gd" id="2_0ipoa"]
 [ext_resource type="PackedScene" path="res://prefabs/hit_flash.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://prefabs/squash_stretch.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://prefabs/knockback_receiver.tscn" id="5"]
 [ext_resource type="Resource" path="res://assets/theme_profile_complete.tres" id="6"]
 [ext_resource type="Resource" path="res://assets/theme_profile_sparse.tres" id="7"]
 
-[node name="ImpactVfxDemo" type="Node2D" node_paths=PackedStringArray("node_target", "node_basic_button", "node_heavy_button", "node_crit_button", "node_knockback_button")]
+[node name="ImpactVfxDemo" type="Node2D" unique_id=271951800 node_paths=PackedStringArray("node_target", "node_basic_button", "node_heavy_button", "node_crit_button", "node_knockback_button")]
 script = ExtResource("1")
-profile_available = [ExtResource("6"), ExtResource("7")]
+profile_available = Array[ExtResource("2_0ipoa")]([ExtResource("6"), ExtResource("7")])
 node_target = NodePath("Target")
 node_basic_button = NodePath("Ui/VBox/BasicButton")
 node_heavy_button = NodePath("Ui/VBox/HeavyButton")
 node_crit_button = NodePath("Ui/VBox/CritButton")
 node_knockback_button = NodePath("Ui/VBox/KnockbackButton")
 
-[node name="Target" type="Sprite2D" parent="."]
+[node name="Target" type="Sprite2D" parent="." unique_id=1487403870]
 position = Vector2(576, 324)
 texture = ExtResource("2")
 
-[node name="HitFlash" parent="Target" instance=ExtResource("3") node_paths=PackedStringArray("node_target")]
+[node name="HitFlash" parent="Target" unique_id=678860234 node_paths=PackedStringArray("node_target") instance=ExtResource("3")]
 flash_source_id = &"dummy"
 node_target = NodePath("..")
 
-[node name="SquashStretch" parent="Target" instance=ExtResource("4") node_paths=PackedStringArray("node_target")]
+[node name="SquashStretch" parent="Target" unique_id=1260805660 node_paths=PackedStringArray("node_target") instance=ExtResource("4")]
 squash_source_id = &"dummy"
 node_target = NodePath("..")
 
-[node name="KnockbackReceiver" parent="Target" instance=ExtResource("5") node_paths=PackedStringArray("node_target")]
+[node name="KnockbackReceiver" parent="Target" unique_id=2092254392 node_paths=PackedStringArray("node_target") instance=ExtResource("5")]
 knockback_source_id = &"dummy"
 node_target = NodePath("..")
 
-[node name="Ui" type="CanvasLayer" parent="."]
+[node name="Ui" type="CanvasLayer" parent="." unique_id=1082708804]
 
-[node name="VBox" type="VBoxContainer" parent="Ui"]
+[node name="VBox" type="VBoxContainer" parent="Ui" unique_id=1200481727]
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 200.0
 offset_bottom = 180.0
 
-[node name="BasicButton" type="Button" parent="Ui/VBox"]
+[node name="BasicButton" type="Button" parent="Ui/VBox" unique_id=548074621]
+layout_mode = 2
 text = "impact.basic"
 
-[node name="HeavyButton" type="Button" parent="Ui/VBox"]
+[node name="HeavyButton" type="Button" parent="Ui/VBox" unique_id=299491470]
+layout_mode = 2
 text = "impact.heavy"
 
-[node name="CritButton" type="Button" parent="Ui/VBox"]
+[node name="CritButton" type="Button" parent="Ui/VBox" unique_id=1756976304]
+layout_mode = 2
 text = "impact.crit"
 
-[node name="KnockbackButton" type="Button" parent="Ui/VBox"]
+[node name="KnockbackButton" type="Button" parent="Ui/VBox" unique_id=494657765]
+layout_mode = 2
 text = "combat.knockback"

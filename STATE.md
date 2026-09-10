@@ -5,6 +5,8 @@ document — update it when reality changes.
 
 - **Design**: [`ARCHITECTURE_SPEC.md`](ARCHITECTURE_SPEC.md)
 - **Task backlog**: [`REMAINING_TASKS.md`](REMAINING_TASKS.md)
+- **Asset slots per theme**: [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md)
+- **Contributing**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Conventions (authoritative, overrides defaults)**: [`CLAUDE.md`](CLAUDE.md)
 - **Brisklance addon** has its *own* spec/tasks under
   `addons/brisklance/manager/` — unrelated to the game framework.

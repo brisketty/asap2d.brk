@@ -1,8 +1,10 @@
 # Contributing to the A.S.A.P. Framework
 
 Read [`CLAUDE.md`](CLAUDE.md) (coding rules, directory layout — authoritative),
-[`ARCHITECTURE_SPEC.md`](ARCHITECTURE_SPEC.md) (design), and
-[`STATE.md`](STATE.md) (current state + gotchas) first.
+[`ARCHITECTURE_SPEC.md`](ARCHITECTURE_SPEC.md) (design),
+[`STATE.md`](STATE.md) (current state + gotchas), and
+[`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md) (the asset ids every theme
+fills) first.
 
 ## Running the checks
 
@@ -66,7 +68,8 @@ fails on a lint violation or `exports/asset_worklist.md` drift.
    translation logic; verify Node wiring with a throwaway smoke scene
    (`godot --headless res://scenes/_smoke_*.tscn`), then delete it.
 9. **Docs** — spec §, `REMAINING_TASKS.md` (check the boxes, add a dated history
-   entry + any follow-ups), `STATE.md`, `README.md`.
+   entry + any follow-ups), `STATE.md`, `README.md`, and — if the subsystem
+   resolves a new concrete id — `THEME_PROFILE_SLOTS.md`.
 
 ## Coding rules quick reference (full text: `CLAUDE.md`)
 

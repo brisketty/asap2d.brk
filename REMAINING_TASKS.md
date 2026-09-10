@@ -361,6 +361,15 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
 
 ## History
 
+### 2026-09-11 — `THEME_PROFILE_SLOTS.md`
+
+Reference doc cataloguing every concrete id the shipped framework resolves — the
+fixed slots (`world.parallax.*`, `world.ambient`, `world.overlay`, `world.tiles`,
+`impact.spark`, `sfx.*`, `state.*` post-fx & bus-profile) and the dynamic id
+patterns (`<theme>.<n>`, `ambience.<biome>`, `stinger.<id>`, `<biome>`
+bus-profile) — with the "missing →" behaviour, the shared-vs-per-biome caveat,
+and a worked `forest` profile. Linked from README / spec / STATE / CONTRIBUTING.
+
 ### 2026-09-10 — `tileset` asset kind + AnimatedTileDriver (Phase 2 follow-up)
 
 8th asset kind, closes out World & Environment. `AnimatedTileDriver` is an
