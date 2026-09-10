@@ -46,12 +46,19 @@ extends Resource
 		music_assets = p_value
 		update_from_music_assets()
 
+## StringName -> BusProfile (per-biome / per-state mixing state).
+@export var bus_profile_assets: Dictionary:
+	set(p_value):
+		bus_profile_assets = p_value
+		update_from_bus_profile_assets()
+
 @export var default_sprite: Texture2D
 @export var default_audio: AudioStream
 @export var default_particle: Resource
 @export var default_shader: ShaderMaterial
 @export var default_post_fx: ShaderMaterial
 @export var default_music: AudioStream
+@export var default_bus_profile: BusProfile
 
 
 func update_from_sprite_assets() -> void:
@@ -75,6 +82,10 @@ func update_from_post_fx_assets() -> void:
 
 
 func update_from_music_assets() -> void:
+	pass # Hook for derived profiles that precompute lookup state.
+
+
+func update_from_bus_profile_assets() -> void:
 	pass # Hook for derived profiles that precompute lookup state.
 
 
@@ -114,6 +125,12 @@ func resolve_music_or_null(p_asset_id: StringName) -> AudioStream:
 	return music_assets[p_asset_id] as AudioStream
 
 
+func resolve_bus_profile_or_null(p_asset_id: StringName) -> BusProfile:
+	if not bus_profile_assets.has(p_asset_id):
+		return null
+	return bus_profile_assets[p_asset_id] as BusProfile
+
+
 func collect_sprite_ids() -> PackedStringArray:
 	return collect_ids_of(sprite_assets)
 
@@ -136,6 +153,10 @@ func collect_post_fx_ids() -> PackedStringArray:
 
 func collect_music_ids() -> PackedStringArray:
 	return collect_ids_of(music_assets)
+
+
+func collect_bus_profile_ids() -> PackedStringArray:
+	return collect_ids_of(bus_profile_assets)
 
 
 func collect_ids_of(p_asset_dictionary: Dictionary) -> PackedStringArray:

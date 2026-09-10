@@ -342,18 +342,19 @@ A subsystem PR that introduces an id adds a row here.
 | shader | `_shader_asset_id` | `shader_assets` | `ShaderMaterial` (world atmosphere) | live |
 | post_fx | `_post_fx_asset_id` | `post_fx_assets` | `ShaderMaterial` (state grade) | live |
 | music | `_music_asset_id` | `music_assets` | `AudioStream` (looped) | live |
+| bus_profile | `_bus_profile_asset_id` | `bus_profile_assets` | `BusProfile` | live |
 | tileset | `_tileset_asset_id` | `tileset_assets` | `TileSet` | planned (Phase 2 follow-up) |
-| bus_profile | `_bus_profile_asset_id` | `bus_profile_assets` | bus-effect config `Resource` | planned (Phase 7) |
 
 `resolve_sprite` always returns a texture (the `res://icon.svg` engine default).
-`resolve_audio` / `resolve_particle` / `resolve_shader` / `resolve_post_fx` may
-return `null` until the project sets the matching `profile_fallback_*`.
+Every other `resolve_*` may return `null` until the project sets the matching
+`profile_fallback_*`.
 
 ---
 
 ## Subsystems
 
-Each is a phase in [`REMAINING_TASKS.md`](REMAINING_TASKS.md).
+All seven are implemented (Phases 1–7). Each is a phase in
+[`REMAINING_TASKS.md`](REMAINING_TASKS.md), with its follow-ups.
 
 ### A. Impact & Combat VFX Subsystem — `ImpactVfx`  ✅ implemented (Phase 1)
 
@@ -566,20 +567,36 @@ Autoload `MusicDirector`, `class_name MusicDirectorSubsystem`
 - **Deferred:** `state.*` → tension mapping (only `music.tension` drives it now);
   sample-lock is best-effort (all stems `play()` in one frame).
 
-### G. Audio Bus / Mixing Subsystem — `AudioMixing`
+### G. Audio Bus / Mixing Subsystem — `AudioMixing`  ✅ implemented (Phase 7)
 
-Spatialisation config, dry unattenuated UI listener, theme-specific bus effect
-overrides (reverb, EQ).
+Autoload `AudioMixing`, `class_name AudioMixingSubsystem`
+(`autoloads/audio_mixing.gd`).
 
-- **Owns** the project audio bus layout doc (`Master → Music, Ambience, SFX
-  (→ SFX_Reverb send), UI (dry)`).
-- **Listens:** `biome.entered` / `state.*` → apply a `bus_profile` resource
-  (`ThemeManager.resolve_bus_profile`) that sets reverb room size, wet mix, EQ
-  per bus. Cross-faded via effect parameter tweens, not hard swaps.
-- **UI listener:** ensures `ui.*` SFX route through the dry `UI` bus with no
-  attenuation/reverb even when a heavy `bus_profile` is active.
-- **Spatialisation:** central config (max distance, attenuation curve, panning
-  strength) that `SfxPlayer` reads rather than each route re-specifying.
+- **Bus layout:** `default_bus_layout.tres` = `Master ← {Music, Ambience, SFX,
+  UI}`. `AudioMixing._ready()` **adds an `AudioEffectReverb` to the `SFX` bus at
+  runtime** (wet 0) rather than baking it into the `.tres` — the subsystem owns
+  its own effect, and the `.tres` stays trivially editable.
+- **`bus_profile` asset kind** (7th) — `ThemeProfile.bus_profile_assets` →
+  `BusProfile` resource (`bus_music_db` / `bus_ambience_db` / `bus_sfx_db`,
+  `reverb_wet`, `reverb_room_size`). No `UI` field — it stays dry by construction.
+- **`AudioMixingTranslation`** (`scripts/audio_mixing_translation.gd`,
+  autoload-free static): `neutral_profile`, `make_profile`, `bus_targets`
+  (`bus → dB`, never `UI`), `is_dry_bus`, `reverb_{wet,room_size}_for` (clamped).
+  Unit-tested.
+- **Listens:** `biome.entered` → `ThemeManager.resolve_bus_profile(biome_id)` (or
+  neutral) → `apply_bus_profile` tweens the trimmable bus gains
+  (`AudioServer.set_bus_volume_db` via `tween_method`) and the reverb `wet` /
+  `room_size` over `MIX_TWEEN_SECONDS`, no hard swaps. `biome.exited` → neutral.
+- **Dry-UI guarantee:** `bus_targets` never lists `UI` and the reverb is only on
+  `SFX`, so `ui.*` SFX (routed to the `UI` bus by `SfxPlayer`) are always dry.
+  `is_ui_bus_dry()` asserts it for tooling.
+- **Spatialisation:** `@export spatial_{max_distance,attenuation,panning_strength}`
+  applied to every positional voice via `AudioMixing.apply_spatialisation(voice)`,
+  called by `SfxPlayer` after acquiring one.
+- **Demo:** `scenes/demo_mixing.tscn` — a looping SFX tone + cave/hall/dry
+  buttons; the reverb audibly wets and dries.
+- **Deferred:** EQ per bus (only gain + reverb now); `state.*` bus overrides
+  (only `biome.*` wired).
 
 ---
 
@@ -594,10 +611,10 @@ need a per-node reset on reuse should give `pool_scene`'s root a
 
 ### `ThemeProfile` scaling
 
-**Decision (settled at kind 6, `music`).** `ThemeProfile` keeps an **explicit
-typed `@export var <kind>_assets: Dictionary` + `default_<kind>` per kind** — it
-reads far better in the inspector and in hand-edited `.tres` than an opaque
-`Dictionary` of `Dictionary`. The duplication that mattered was on the
+**Decision (settled at kind 6, `music`; holds at 7 with `bus_profile`).**
+`ThemeProfile` keeps an **explicit typed `@export var <kind>_assets: Dictionary`
++ `default_<kind>` per kind** — it reads far better in the inspector and in
+hand-edited `.tres` than an opaque `Dictionary` of `Dictionary`. The duplication that mattered was on the
 `ThemeManager` side, and that was removed instead: `resolve_with_ladder(...)` +
 `profile_asset_or_null(method, id)` + `profile_default_or_null(property)` make
 every `resolve_<kind>` / `has_<kind>` a one-or-two-liner. Adding a kind is now:

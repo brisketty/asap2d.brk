@@ -290,21 +290,37 @@ checks green; editor import clean; demo + music runtime smoke pass).
 
 ## Phase 7 — Audio Bus / Mixing Subsystem (`AudioMixing`)
 
-Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
+Spec: §G. **✅ complete** (12 suites / 160 checks green; editor import clean;
+demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
 
-- [ ] `ThemeManager.resolve_bus_profile` + `has_bus_profile`; scanner
-  `BUS_PROFILE_ID_SUFFIX`.
-- [ ] `default_bus_layout.tres` — `Master → Music, Ambience, SFX (→ SFX_Reverb
-  send), UI (dry)`; document in spec.
-- [ ] `scripts/bus_profile.gd` — `BusProfile` resource: per-bus reverb room/wet,
-  EQ, gain overrides.
-- [ ] `autoloads/audio_mixing.gd` — listen `biome.entered` / `state.*`; apply a
-  `BusProfile` via effect-parameter `Tween`s (no hard swaps).
-- [ ] Guarantee `ui.*` SFX stay on the dry `UI` bus regardless of active profile.
-- [ ] Central spatialisation config (`max_distance`, attenuation curve, panning
-  strength) that `SfxPlayer` reads.
-- [ ] Register autoload; `scenes/demo_mixing.tscn`; `tests/test_audio_mixing.gd`
-  (profile → per-bus parameter targets; dry-UI invariant).
+- [x] `bus_profile` asset kind (7th): `ThemeProfile.bus_profile_assets` +
+  `default_bus_profile` + `resolve_bus_profile_or_null` + `collect_bus_profile_ids`;
+  `ThemeManager.resolve_bus_profile` / `has_bus_profile` / `profile_fallback_bus_profile`;
+  scanner `BUS_PROFILE_ID_SUFFIX` / `BUS_PROFILE_KIND` + branches.
+- [x] `default_bus_layout.tres` kept minimal (`Master ← Music, Ambience, SFX, UI`);
+  the SFX reverb is **added at runtime** by `AudioMixing._ready()` (subsystem owns
+  its effect, `.tres` stays editable) rather than baked in.
+- [x] `scripts/bus_profile.gd` (`BusProfile` resource: per-bus dB trims + reverb
+  wet/room) + `scripts/audio_mixing_translation.gd` (`AudioMixingTranslation`,
+  autoload-free static: `neutral_profile`, `make_profile`, `bus_targets` (never
+  `UI`), `is_dry_bus`, `reverb_{wet,room_size}_for`).
+- [x] `autoloads/audio_mixing.gd` — `AudioMixingSubsystem` / autoload
+  `AudioMixing`; `biome.entered` → `resolve_bus_profile` → `apply_bus_profile`
+  tweens bus gains (`set_bus_volume_db` via `tween_method`) + reverb wet/room;
+  `biome.exited` → neutral.
+- [x] Dry-UI guarantee: `bus_targets` never lists `UI`, reverb only on `SFX`;
+  `is_ui_bus_dry()` asserts it.
+- [x] `@export spatial_{max_distance,attenuation,panning_strength}` +
+  `apply_spatialisation(voice)`, called by `SfxPlayer` after acquiring a
+  positional voice.
+- [x] Register autoload; `scenes/demo_mixing.{gd,tscn}`;
+  `tests/test_audio_mixing.gd` (13 checks).
+
+### Phase 7 follow-ups
+
+- [ ] Per-bus EQ (only gain + reverb now).
+- [ ] `state.*` bus overrides (only `biome.*` wired).
+- [ ] `SFX_Reverb` as a real send bus (currently a direct effect on `SFX`).
 
 ---
 
@@ -325,6 +341,26 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 7: Audio Bus / Mixing — framework complete
+
+`AudioMixing` autoload + `AudioMixingTranslation` (pure) + `BusProfile`;
+`bus_profile` asset kind (7th); runtime SFX reverb install; per-bus gain +
+reverb tweens on `biome.entered`; central spatialisation config applied by
+`SfxPlayer`; `demo_mixing`; `test_audio_mixing` (13). 12 suites / 160 checks.
+Smoke: `biome.entered cave` → music bus to -3 dB, reverb wet 0 → 0.5, UI bus
+untouched and still effect-free; `biome.exited` → neutral.
+
+**All 7 subsystems are now implemented.** Foundation + 7 subsystems + the
+kind-6 refactor = 9 commits on `framework/foundation`; 13 headless test suites
+(160 checks), 8 demo scenes, all green on Godot 4.7.
+
+- SFX reverb is added to the `SFX` bus at runtime, not baked into
+  `default_bus_layout.tres` — keeps the layout file editable and the effect
+  owned by the subsystem.
+- The dry-UI guarantee is structural: `bus_targets` never yields `UI` and the
+  reverb lives only on `SFX`, so nothing the subsystem does can colour interface
+  sound.
 
 ### 2026-09-10 — Phase 6: BGM & Ambience
 

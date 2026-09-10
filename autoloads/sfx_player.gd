@@ -59,7 +59,9 @@ func handle_semantic_event_emitted(p_event_id: StringName, p_context: Dictionary
 	var keep := SfxTranslation.should_keep_on_scene_change(route)
 	if route.route_spatialized:
 		var position: Vector2 = p_context.get(Utility.CONTEXT_POSITION_KEY, Vector2.ZERO)
-		positional_pool.play(stream, pitch, volume_db, position, keep)
+		var voice := positional_pool.play(stream, pitch, volume_db, position, keep) as AudioStreamPlayer2D
+		if Utility.is_object_valid(voice):
+			AudioMixing.apply_spatialisation(voice)
 		return
 	ui_pool.play(stream, pitch, volume_db, Vector2.ZERO, keep)
 

@@ -108,4 +108,9 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
 - **BGM & Ambience** (`MusicDirector`) — ✅ two-bank stem crossfade, intensity
   layering (`music.tension`), per-biome ambience loop, stingers.
   Demo: `scenes/demo_music.tscn`.
-- Audio Bus / Mixing — planned (see `REMAINING_TASKS.md`).
+- **Audio Bus / Mixing** (`AudioMixing`) — ✅ per-biome bus gain + SFX reverb
+  tweens via a `BusProfile`, structural dry-`UI` bus, central positional-audio
+  config. Demo: `scenes/demo_mixing.tscn`.
+
+All seven subsystems are implemented. Remaining work (per-phase follow-ups,
+tooling, CI) is tracked in `REMAINING_TASKS.md`.

@@ -10,6 +10,7 @@ class StubThemeManager:
 	var mapped_shaders: PackedStringArray = []
 	var mapped_post_fx: PackedStringArray = []
 	var mapped_music: PackedStringArray = []
+	var mapped_bus_profiles: PackedStringArray = []
 
 	func has_sprite(p_asset_id: StringName) -> bool:
 		return mapped_sprites.has(String(p_asset_id))
@@ -29,6 +30,9 @@ class StubThemeManager:
 	func has_music(p_asset_id: StringName) -> bool:
 		return mapped_music.has(String(p_asset_id))
 
+	func has_bus_profile(p_asset_id: StringName) -> bool:
+		return mapped_bus_profiles.has(String(p_asset_id))
+
 
 func _initialize() -> void:
 	var failure_count := 0
@@ -39,6 +43,7 @@ func _initialize() -> void:
 	failure_count += expect_true("shader suffix classified", AssetIdScanner.classify_property("haze_shader_asset_id") == AssetIdScanner.SHADER_KIND)
 	failure_count += expect_true("post_fx suffix classified", AssetIdScanner.classify_property("hurt_post_fx_asset_id") == AssetIdScanner.POST_FX_KIND)
 	failure_count += expect_true("music suffix classified", AssetIdScanner.classify_property("theme_music_asset_id") == AssetIdScanner.MUSIC_KIND)
+	failure_count += expect_true("bus_profile suffix classified", AssetIdScanner.classify_property("cave_bus_profile_asset_id") == AssetIdScanner.BUS_PROFILE_KIND)
 	failure_count += expect_true("event suffix classified", AssetIdScanner.classify_property("hit_event_id") == AssetIdScanner.EVENT_KIND)
 	failure_count += expect_true("unrelated property ignored", AssetIdScanner.classify_property("position") == &"")
 
