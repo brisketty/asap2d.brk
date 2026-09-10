@@ -349,29 +349,51 @@ A subsystem PR that introduces an id adds a row here.
 
 ---
 
-## Planned subsystems
+## Subsystems
 
-Each is a phase in [`REMAINING_TASKS.md`](REMAINING_TASKS.md). Design sketches:
+Each is a phase in [`REMAINING_TASKS.md`](REMAINING_TASKS.md).
 
-### A. Impact & Combat VFX Subsystem — `ImpactVfx`
+### A. Impact & Combat VFX Subsystem — `ImpactVfx`  ✅ implemented (Phase 1)
 
-Object-pooled particle bursts, hit flashes, hit-stop, knockback, squash &
-stretch.
+Autoload `ImpactVfx`, `class_name ImpactVfxSubsystem` (`autoloads/impact_vfx.gd`).
 
-- **Listens:** `impact.*`, `combat.hitstop`, `combat.knockback`, `entity.destroyed`.
-- **Prefabs:** `particle_burst_pool` (`GPUParticles2D` pool), `hit_flash` shader
-  material applied to a target `CanvasItem` via a registration API
-  (`register_flashable(p_id, p_canvas_item)` — the *target* registers itself; the
-  subsystem never looks nodes up).
-- **Hit-stop:** `Engine.time_scale` pulse, coordinated through a single owner so
-  overlapping requests take the max and restore once.
-- **Knockback / squash&stretch:** emits *nothing visual itself* on the entity;
-  publishes a resolved `combat.knockback` intent that entity-side movement code
-  (still pure — it consumes a vector, not a node) applies, **or** provides an
-  opt-in `KnockbackReceiver` prefab an entity scene can include.
-- **Assets:** `*_particle_asset_id`, `*_shader_asset_id`.
-- **Pillar-3:** missing particle → `default_particle`; missing flash shader →
-  no-op flash (never crash).
+- **Listens:** `impact.*` (burst + optional hit-stop from the intensity row),
+  `combat.hitstop` (`context.magnitude` seconds).
+- **`ImpactTranslation`** (`scripts/impact_translation.gd`, autoload-free, static)
+  — intensity-table lookup + `compute_hitstop_end` bookkeeping. Unit-tested
+  headless; the Node is just the wiring.
+- **Intensity table:** `@export Array[ImpactIntensity]` (`intensity_event_id`,
+  `intensity_particle_asset_id`, `intensity_particle_count`,
+  `intensity_hitstop_seconds`). Empty → `build_default_intensity_table()`
+  (basic/heavy/crit/block). An explicit table **replaces** the defaults, it does
+  not merge.
+- **`ParticleBurstPool`** (`prefabs/particle_burst_pool.{gd,tscn}`) — a `NodePool`
+  of one-shot `GPUParticles2D` (`particle_burst.tscn`); `burst(pos, asset_id,
+  count)` pulls a `ParticleProcessMaterial` via `ThemeManager.resolve_particle`
+  (falls through to the prefab's built-in material on a miss), emits, releases
+  after `lifetime`.
+- **Hit-stop:** single owner. `request_hitstop(seconds)` → `hitstop_end_msec` =
+  `ImpactTranslation.compute_hitstop_end(...)` (max-of, clamped to
+  `hitstop_max_seconds`); `Engine.time_scale = 0.0001`; a chain of real-time
+  `SceneTreeTimer`s (`ignore_time_scale = true`) re-checks the absolute end and
+  restores `time_scale = 1.0` once.
+- **Opt-in components** (added to an entity scene, `node_target` + a
+  `*_source_id`, listen on the bus directly — the subsystem never touches
+  entities):
+  - `HitFlash` — `modulate` pulse on any `impact.*` matching `flash_source_id`.
+    (A shader flash via `flash_shader_asset_id` + `resolve_shader` is a Phase 2
+    upgrade; kept as a no-op fallback for now.)
+  - `KnockbackReceiver` — lurch `node_target.position` along
+    `context.direction * context.magnitude` on `combat.knockback`, ease back.
+  - `SquashStretch` — squash `node_target.scale` on `impact.*` /
+    `combat.knockback`, spring back (elastic).
+- **Not here:** auto-trauma from `impact.heavy`/`crit` is **Camera's** concern
+  (§C has its own event→trauma table); the subsystem does not emit `camera.*`.
+- **Demo:** `scenes/demo_impact_vfx.tscn` — dummy target with all three
+  components + four emit buttons.
+- **Known gap:** intensity-table `*_asset_id`s live on a `.tres`/autoload, not a
+  scene node, so `AssetIdScanner` does not see them (it walks scenes only). A
+  "scan exported `Resource` arrays" follow-up is in `REMAINING_TASKS.md`.
 
 ### B. World & Environment Subsystem — `WorldEnvironment2D`
 

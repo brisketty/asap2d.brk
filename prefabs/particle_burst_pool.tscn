@@ -1,0 +1,15 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://prefabs/particle_burst_pool.gd" id="1"]
+[ext_resource type="Script" path="res://prefabs/node_pool.gd" id="2"]
+[ext_resource type="PackedScene" path="res://prefabs/particle_burst.tscn" id="3"]
+
+[node name="ParticleBurstPool" type="Node" node_paths=PackedStringArray("node_pool")]
+script = ExtResource("1")
+node_pool = NodePath("NodePool")
+
+[node name="NodePool" type="Node" parent="."]
+script = ExtResource("2")
+pool_scene = ExtResource("3")
+pool_prewarm_count = 4
+pool_max_count = 24

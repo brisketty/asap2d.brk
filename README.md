@@ -85,8 +85,14 @@ godot --headless --script res://tests/test_asset_id_scanner.gd
 
 Each prints `All ... tests passed.` and exits `0`.
 
-## Planned subsystems
+## Subsystems
 
-Built on this foundation, each as its own `class_name` manager under `prefabs/`:
-Impact & Combat VFX · World & Environment · Camera & Post-Processing ·
-UI & HUD Polish · Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing.
+Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
+`<Name>` autoload) plus `prefabs/` components:
+
+- **Impact & Combat VFX** (`ImpactVfx`) — ✅ pooled particle bursts, hit-stop,
+  `HitFlash` / `KnockbackReceiver` / `SquashStretch` components.
+  Demo: `scenes/demo_impact_vfx.tscn`.
+- World & Environment · Camera & Post-Processing · UI & HUD Polish ·
+  Polyphonic Audio (SFX) · BGM & Ambience · Audio Bus / Mixing — planned
+  (see `REMAINING_TASKS.md`).

@@ -70,31 +70,46 @@ Delivered and verified against Godot 4.7 (`godot --headless`): 3 test suites,
 
 ## Phase 1 — Impact & Combat VFX Subsystem (`ImpactVfx`)
 
-Spec: §Planned subsystems A. Depends on: `NodePool`, `resolve_particle`.
+Spec: §Subsystems A. Depends on: `NodePool`, `resolve_particle`. **✅ complete**
+(6 test suites / 62 checks green; editor import clean; demo + runtime smoke pass).
 
-- [ ] `autoloads/impact_vfx.gd` — `class_name ImpactVfxSubsystem`, autoload
-  `ImpactVfx`; connect `EventBus.semantic_event_emitted` in `_ready()`;
-  `handle_semantic_event_emitted` dispatch on `impact.*`, `combat.hitstop`,
-  `combat.knockback`, `entity.destroyed`.
-- [ ] `@export` intensity table: `event sub-id → { particle_asset_id, count,
-  trauma_hint, hitstop_seconds }` (designer-tunable).
-- [ ] `prefabs/particle_burst_pool.{gd,tscn}` — `GPUParticles2D` `NodePool`;
-  `burst(p_position, p_particle_asset_id, p_amount)`; material from
-  `ThemeManager.resolve_particle`.
-- [ ] Hit-flash: `prefabs/hit_flash.gd` shader-material component;
-  `register_flashable(p_id, p_canvas_item)` / `unregister_flashable(p_id)`;
-  `flash(p_id)` on event; missing shader → no-op.
-- [ ] Hit-stop owner: single `Engine.time_scale` pulse; overlapping requests take
-  the max; always restores; `@export` max-duration clamp.
-- [ ] Knockback: publish resolved `combat.knockback` vector in context **and**
-  optional `prefabs/knockback_receiver.{gd,tscn}` opt-in component.
-- [ ] Squash & stretch: `prefabs/squash_stretch.gd` component driven by
-  `combat.knockback` / `impact.*`.
-- [ ] Register autoload in `project.godot`.
-- [ ] `scenes/demo_impact_vfx.tscn` — dummy target + emit buttons.
-- [ ] `tests/test_impact_vfx.gd` — event → (particle id, count, hitstop seconds)
-  translation with a stub `ThemeManager`; hit-stop max/restore logic.
-- [ ] Spec registry rows for any new `impact.*` / `combat.*` ids.
+- [x] `autoloads/impact_vfx.gd` — `ImpactVfxSubsystem` / autoload `ImpactVfx`;
+  dispatch on `impact.*` + `combat.hitstop`. (`combat.knockback` /
+  `entity.destroyed` handled by the opt-in components / left for later, not the
+  autoload.)
+- [x] `scripts/impact_intensity.gd` (`ImpactIntensity` resource) +
+  `scripts/impact_translation.gd` (`ImpactTranslation`, autoload-free static:
+  `build_lookup`, `build_default_intensity_table`, `compute_hitstop_end`).
+  `@export Array[ImpactIntensity]` on the subsystem; explicit table **replaces**
+  defaults. Dropped `trauma_hint` — trauma is Camera's (§C).
+- [x] `prefabs/particle_burst.tscn` (one-shot GPUParticles2D + built-in
+  ParticleProcessMaterial) + `prefabs/particle_burst_pool.{gd,tscn}`
+  (`ParticleBurstPool` wrapping a `NodePool`); `burst()` pulls material from
+  `ThemeManager.resolve_particle`, falls through to the built-in on a miss.
+- [x] `prefabs/hit_flash.{gd,tscn}` — `HitFlash` component; `modulate` pulse on
+  matching `impact.*`. Shader flash deferred to Phase 2 (`resolve_shader`);
+  `flash_shader_asset_id` export reserved.
+- [x] Hit-stop owner — `request_hitstop`, `compute_hitstop_end` (max-of, clamp to
+  `hitstop_max_seconds`), `Engine.time_scale = 0.0001`, real-time timer chain
+  restores. Smoke-verified engage + release.
+- [x] `prefabs/knockback_receiver.{gd,tscn}` — `KnockbackReceiver`; lurch + ease
+  back on `combat.knockback`.
+- [x] `prefabs/squash_stretch.{gd,tscn}` — `SquashStretch`; elastic squash on
+  `impact.*` / `combat.knockback`.
+- [x] `ImpactVfx` autoload registered (after `EventBus`, `ThemeManager`).
+- [x] `scenes/demo_impact_vfx.{gd,tscn}` — dummy target + 3 components + 4 buttons.
+- [x] `tests/test_impact_vfx.gd` (13 checks) — `ImpactTranslation` lookup +
+  hit-stop bookkeeping. (Autoload wiring verified via demo/smoke, not `--script`
+  — see history.)
+- [x] Registry rows: `impact.*` / `combat.*` already covered.
+
+### Phase 1 follow-ups
+
+- [ ] `AssetIdScanner`: also walk exported `Resource` arrays / scan `.tres` under
+  `res://assets` so intensity-table `*_asset_id`s become telemetry-visible.
+- [ ] `HitFlash` shader path once `resolve_shader` lands (Phase 2).
+- [ ] `combat.death` / `entity.destroyed` handling (death burst) — with the
+  entity-lifecycle work.
 
 ---
 
@@ -244,6 +259,27 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 1: Impact & Combat VFX
+
+`ImpactVfx` autoload + `ImpactTranslation` (pure) + `ImpactIntensity`;
+`ParticleBurstPool` (over `NodePool`); `HitFlash` / `KnockbackReceiver` /
+`SquashStretch` opt-in components; `demo_impact_vfx`; `test_impact_vfx` (13).
+6 suites / 62 checks green.
+
+- **Autoload-referencing scripts can't be `preload`ed in a `--script` run.**
+  A headless `godot --headless --script <SceneTree>` does **not** load autoloads,
+  and a script that names `EventBus` / `ThemeManager` as a bare identifier fails
+  to *compile* there ("Identifier not found: EventBus") — which also kills its
+  static methods. Fix / pattern: keep each subsystem's pure logic in an
+  autoload-free `*_translation.gd` (`class_name`, static) and unit-test that;
+  verify the Node wiring via a scene run / smoke instead.
+- Hit-stop uses `Engine.time_scale = 0.0001` (not `0.0` — a true zero freezes
+  `_process` delta so a delta-based restore never fires) + real-time
+  `create_timer(t, true, false, true)` whose 4th arg `ignore_time_scale` makes
+  it tick while frozen.
+- Trauma dropped from the intensity table — `impact.heavy`/`crit` auto-trauma is
+  Camera's (§C), consumed directly off the bus.
 
 ### 2026-09-10 — Phase 0 follow-ups landed
 
