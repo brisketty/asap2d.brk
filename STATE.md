@@ -136,6 +136,15 @@ destroyed` — **these are normal at-exit messages, not failures.** Grep them ou
    tools (`run_asset_scan.gd`) are `extends SceneTree` with a `_initialize()` +
    `quit(0)`, invoked `godot --headless --script res://...`.
 
+6d. **`--headless --editor --quit` normalizes older resources.** Godot 4.7
+   rewrites `format=3` `.tres`/`.tscn`/`project.godot` to its current sub-format
+   (uid in the header, `load_steps` dropped, `uid=` on ext_resources, base type
+   hints like `ShaderMaterial`→`Material`). Harmless and idempotent, but it
+   dirties tracked files — `git checkout` them before committing unrelated work,
+   or commit the normalization on its own. `--script` runs alone do **not** do
+   this; only `--editor`. (`570d980` accidentally bundled such churn into a docs
+   commit — benign, left as-is rather than force-pushing public history.)
+
 6b. **`--script` runs do NOT load autoloads.** A `SceneTree` test that
    `preload`s a script naming `EventBus` / `ThemeManager` / any autoload as a
    bare identifier gets `Parse/Compile Error: Identifier not found` — and that
