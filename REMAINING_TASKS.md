@@ -256,20 +256,35 @@ editor import clean; demo + SFX runtime smoke pass).
 
 ## Phase 6 — BGM & Ambience Subsystem (`MusicDirector`)
 
-Spec: §F. Depends on: `resolve_music`, Phase 7 (soft).
+Spec: §F. Depends on: `resolve_music` (done). **✅ complete** (12 suites / 149
+checks green; editor import clean; demo + music runtime smoke pass).
 
-- [ ] `ThemeManager.resolve_music` + `has_music`; scanner `MUSIC_ID_SUFFIX`.
-- [ ] `autoloads/music_director.gd` — listen `music.theme`/`music.tension`/
-  `music.stinger`, `biome.entered`, `state.*`.
-- [ ] `prefabs/stem_player.{gd,tscn}` — N sample-locked `AudioStreamPlayer`s;
-  per-stem target `volume_db` from an intensity value; blend without restart.
-- [ ] Crossfade: `Tween` old theme down / new up over `@export` seconds; stream
-  set from `resolve_music`.
-- [ ] `prefabs/ambience_loop.{gd,tscn}` — looped player on the ambience bus;
-  swap on `biome.entered`.
-- [ ] Stinger: one-shot over the running theme (no duck unless `@export`ed).
-- [ ] Register autoload; `scenes/demo_music.tscn`; `tests/test_music_director.gd`
-  (intensity→stem volume curve; theme-change crossfade state machine).
+- [x] `resolve_music` / `has_music` / scanner `MUSIC_ID_SUFFIX` — done in the
+  kind-6 refactor step.
+- [x] `autoloads/music_director.gd` — `MusicDirectorSubsystem` / autoload
+  `MusicDirector`; `music.theme` / `music.tension` / `music.stinger` /
+  `biome.entered` / `biome.exited`.
+- [x] `scripts/music_translation.gd` (`MusicTranslation`, autoload-free static:
+  `stem_asset_id`, `stem_activation`, `stem_volume_db`, `crossfade_volumes`,
+  `resolve_stem_streams`).
+- [x] Stems: **two banks** of N `AudioStreamPlayer`s created in the autoload
+  (not a prefab - matches the HudPolish/SfxPlayer "autoload owns its pool"
+  pattern). `set_intensity` retweens the active bank; theme change fades incoming
+  up / outgoing down on separate tweens (no same-player conflict).
+- [x] Crossfade over `@export music_crossfade_seconds`; streams from
+  `MusicTranslation.resolve_stem_streams`.
+- [x] Ambience: one looping player on bus `Ambience`, swapped on `biome.entered`.
+- [x] Stinger: one player on bus `Music`, fired over the theme, no duck.
+- [x] Register autoload; `scenes/demo_music.{gd,tscn}` (+ `ToneStream` looping
+  support); `tests/test_music_director.gd` (15 checks).
+
+### Phase 6 follow-ups
+
+- [ ] `state.*` (`state.lowhealth` etc.) → tension mapping (only `music.tension`
+  drives intensity now).
+- [ ] Tighter sample-lock (currently all stems `play()` in one frame - fine at
+  60 fps, may drift on a hitch).
+- [ ] `music_stem_count` is fixed after `_ready()`; changing it needs a restart.
 
 ---
 
@@ -310,6 +325,22 @@ Spec: §G. Best done alongside Phase 5/6 (they consume its buses).
 ---
 
 ## History
+
+### 2026-09-10 — Phase 6: BGM & Ambience
+
+`MusicDirector` autoload + `MusicTranslation` (pure); two-bank stem crossfade;
+looping ambience + stinger players; `demo_music` (tension slider) + looping
+`ToneStream`; `test_music_director` (15). 12 suites / 149 checks green.
+Smoke: theme forest → tension 1.0 lifts all 3 stems to 0 dB → tension 0.2 drops
+stem 2 to the floor → theme cave crossfades banks (new up, old down, old stops).
+
+- **Bug found + fixed in the smoke:** the first design had one tween per
+  crossfade animating *both* banks' `volume_db`; a following `set_intensity`
+  fought it on the incoming stems (pinned at the floor for the whole 2 s).
+  Fix: crossfade animates only the *outgoing* bank; the incoming bank fades up
+  through `set_intensity` — different players, no conflict.
+- Stems are created in the autoload, not a `stem_player` prefab — consistent
+  with HudPolish/SfxPlayer owning their pools inline.
 
 ### 2026-09-10 — ThemeManager resolution refactor + `music` kind (kind 6)
 

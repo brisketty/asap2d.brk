@@ -105,4 +105,7 @@ Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
 - **Polyphonic Audio / SFX** (`SfxPlayer`) — ✅ route table, pooled positional +
   dry voices, per-voice pitch/volume randomisation, orphan-clip safety on scene
   change. Demo: `scenes/demo_sfx.tscn`.
-- BGM & Ambience · Audio Bus / Mixing — planned (see `REMAINING_TASKS.md`).
+- **BGM & Ambience** (`MusicDirector`) — ✅ two-bank stem crossfade, intensity
+  layering (`music.tension`), per-biome ambience loop, stingers.
+  Demo: `scenes/demo_music.tscn`.
+- Audio Bus / Mixing — planned (see `REMAINING_TASKS.md`).

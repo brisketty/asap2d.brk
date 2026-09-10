@@ -534,20 +534,37 @@ Autoload `SfxPlayer`, `class_name SfxPlayerSubsystem` (`autoloads/sfx_player.gd`
   code-built `ThemeProfile` of procedural tones (`ToneStream`, a demo/test
   helper).
 
-### F. BGM & Ambience Subsystem — `MusicDirector`
+### F. BGM & Ambience Subsystem — `MusicDirector`  ✅ implemented (Phase 6)
 
-Stem blending, theme crossfades, ambient loops.
+Autoload `MusicDirector`, `class_name MusicDirectorSubsystem`
+(`autoloads/music_director.gd`).
 
-- **Listens:** `music.theme` / `music.tension` / `music.stinger`, `biome.entered`,
-  `state.*`.
-- **Stems:** N synced `AudioStreamPlayer`s (same length, sample-locked), per-stem
-  target `volume_db` driven by an intensity value (`context.magnitude` or a
-  `state.*` id) — blend, don't restart.
-- **Crossfade:** on `music.theme` change, `Tween` old bus volume down / new up
-  over an `@export` duration; resolve the new stream set via
-  `ThemeManager.resolve_music`.
-- **Ambience:** looped `AudioStreamPlayer` on the ambience bus, swapped on
-  `biome.entered`.
+- **Listens:** `music.theme` (`context.source_id` = theme id), `music.tension`
+  (`context.magnitude` = intensity 0–1), `music.stinger` (`context.source_id`),
+  `biome.entered` / `biome.exited` (ambience bed).
+- **`MusicTranslation`** (`scripts/music_translation.gd`, autoload-free static):
+  `stem_asset_id(theme, i)` → `"<theme>.<i>"`, `stem_activation` /
+  `stem_volume_db` (stem *i* fades in once `intensity·count > i`, so rising
+  tension layers the arrangement up), `crossfade_volumes`,
+  `resolve_stem_streams`. Unit-tested.
+- **Stems:** **two banks** of N `AudioStreamPlayer`s on bus `Music`. `music.theme`
+  loads the new theme's stems into the idle bank at floor volume and starts
+  them, then: the incoming (now active) bank fades **up** to its intensity
+  targets via `set_intensity`, and a separate crossfade `Tween` fades the
+  outgoing bank **down** to the floor and stops it. The two tweens never touch
+  the same player.
+- **Intensity:** `music.tension` → `set_intensity` retweens every active-bank
+  stem to `MusicTranslation.stem_volume_db(...)` over ~0.5 s (blend, no restart).
+- **Ambience:** one looping `AudioStreamPlayer` on bus `Ambience`, stream from
+  `resolve_music("ambience.<biome>")`, swapped on `biome.entered`, stopped on
+  `biome.exited` or a missing mapping.
+- **Stinger:** one `AudioStreamPlayer` on bus `Music`, `resolve_music("stinger.<id>")`,
+  fired over the running theme (no duck).
+- **Demo:** `scenes/demo_music.tscn` — theme forest/cave, a tension slider,
+  stinger + ambience buttons, over a code-built `ThemeProfile` of looping
+  `ToneStream`s.
+- **Deferred:** `state.*` → tension mapping (only `music.tension` drives it now);
+  sample-lock is best-effort (all stems `play()` in one frame).
 
 ### G. Audio Bus / Mixing Subsystem — `AudioMixing`
 
