@@ -333,14 +333,27 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
   the `ThemeManager` duplication was removed via `resolve_with_ladder` +
   `profile_asset_or_null` instead. See spec "`ThemeProfile` scaling".
 - [ ] Per-biome `ThemeProfile` sub-resources to keep single profiles small.
-- [ ] CI: run all `/tests/*.gd` headless on push; diff `exports/asset_worklist.md`.
-- [ ] `CONTRIBUTING.md` — subsystem author checklist (mirrors spec §Conventions).
-- [ ] Convention-lint script (`$`, `get_node(`, `func _`, untyped decls).
+- [x] CI — `.github/workflows/test.yml` runs the 12 headless suites + editor
+  import on every push/PR and fails on `asset_worklist.md` drift.
+- [x] `CONTRIBUTING.md` — pillars + the "adding a subsystem" checklist + coding
+  quick reference.
+- [ ] Convention-lint script (`$`, `get_node(`, `func _`, untyped decls) — CI
+  could run it; low priority since the tests + warnings-as-errors already catch
+  most of it.
+- [ ] `AssetIdScanner`: walk exported `Resource` arrays / `.tres` under
+  `res://assets` (intensity tables, world biome ids, bus profiles are invisible
+  to the scanner now — it only walks scene nodes).
 - [ ] Populate `/scenes` / `/prefabs` real game content (out of framework scope).
 
 ---
 
 ## History
+
+### 2026-09-10 — CI + CONTRIBUTING
+
+`.github/workflows/test.yml` (setup-godot 4.7 → import → 12 suites → worklist
+drift check). `CONTRIBUTING.md` — the four pillars and the 9-step "adding a
+subsystem" checklist distilled from doing it seven times.
 
 ### 2026-09-10 — Phase 7: Audio Bus / Mixing — framework complete
 

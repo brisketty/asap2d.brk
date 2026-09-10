@@ -168,12 +168,13 @@ animated tiles + `tileset` kind (Phase 2).
 
 **Deferred / trigger-based:**
 
-- [ ] `Presentation` umbrella autoload — only if the ~9 autoloads become awkward
+- [ ] `Presentation` umbrella autoload — only if the 9 autoloads become awkward
   for load order / teardown.
 - [ ] Per-biome `ThemeProfile` sub-resources.
-- [ ] CI: run `tests/*.gd` headless on push; diff `exports/asset_worklist.md`.
-- [ ] `CONTRIBUTING.md` (referenced by `CLAUDE.md`, doesn't exist yet).
 - [ ] Convention-lint script (`$`, `get_node(`, `func _`, untyped decls).
+- [ ] `AssetIdScanner` walking `.tres` / exported `Resource` arrays.
+
+CI (`.github/workflows/test.yml`) and `CONTRIBUTING.md` now exist.
 
 ---
 
