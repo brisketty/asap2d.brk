@@ -1,15 +1,38 @@
 # STATE.md — working notes for agents
 
-Orientation + gotchas for anyone (human or agent) picking this repo up. Living
-document — update it when reality changes.
+Orientation, gotchas and open work for anyone (human or agent) picking this repo
+up. **Living document — update it when reality changes.**
 
 - **Design**: [`ARCHITECTURE_SPEC.md`](ARCHITECTURE_SPEC.md)
-- **Task backlog**: [`REMAINING_TASKS.md`](REMAINING_TASKS.md)
-- **Asset slots per theme**: [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md)
-- **Contributing**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- **Conventions (authoritative, overrides defaults)**: [`CLAUDE.md`](CLAUDE.md)
-- **Brisklance addon** has its *own* spec/tasks under
-  `addons/brisklance/manager/` — unrelated to the game framework.
+- **Task backlog + dated history**: [`REMAINING_TASKS.md`](REMAINING_TASKS.md)
+- **Asset ids a theme fills**: [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md)
+- **Contributing / "add a subsystem" checklist**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Coding rules (authoritative, overrides everything)**: [`CLAUDE.md`](CLAUDE.md)
+- **Brisklance addon** (`addons/brisklance/`) has its *own* spec/tasks — a
+  plugin self-updater, unrelated to the game framework. Ignore it.
+
+---
+
+## Current state (2026-09-11)
+
+- **Framework complete.** Foundation + all 7 subsystems + tooling, on `main`,
+  pushed to `origin` (`github.com/brisketty/asap2d.brk`).
+- **12 headless test suites / 171 checks**, all green on Godot 4.7. 8 demo
+  scenes run headless with 0 script errors. `lint_conventions` clean.
+  `run_asset_scan` + a per-subsystem runtime smoke each pass.
+- **8 asset kinds live**: sprite, audio, particle, shader, post_fx, music,
+  bus_profile, tileset.
+- `state.*` (`hurt`/`lowhealth`/`paused`/`clear`) feeds Camera (post-FX grade),
+  MusicDirector (intensity floor) and AudioMixing (transient bus grade).
+- `exports/asset_worklist.md` lists `[tileset] world.tiles` — legitimately
+  unmapped (the `AnimatedTileDriver` default id; the demo injects tilesets in
+  code, which the scanner can't see). Not a bug.
+- Git: `main` is `2c3a1ef` (initial) → merge `a3f6d1b` (`--no-ff`, feature
+  commits kept) → ~7 follow-up commits. `framework/foundation` branch still
+  exists locally — merged, safe to delete (`git branch -d framework/foundation`).
+
+**No framework work remains.** Everything open is optional polish — see
+[TODO](#todo).
 
 ---
 
@@ -17,192 +40,258 @@ document — update it when reality changes.
 
 | What | Path | Notes |
 | --- | --- | --- |
-| Godot editor | `D:\Programs\Godot_v4.7\Godot_v4.7-stable_win64.exe` | **Not on PATH.** Godot 4.7 stable. `project.godot` says features `4.6` + GL Compatibility. |
-| Foundation logic | `scripts/`, `autoloads/` | `Utility`, `ThemeProfile`, `AssetIdScanner`, `EventIds`, `run_asset_scan`, `lint_conventions`; `EventBus`, `ThemeManager` |
-| Object pool | `prefabs/node_pool.{gd,tscn}` | `NodePool` — generic |
-| Impact VFX (Phase 1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*.{gd,tscn}`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | translation autoload-free + tested |
-| World & Env (Phase 2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | fixed id set, profile maps per biome |
-| Camera (Phase 3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/camera_rig.{gd,tscn}` | owns the Camera2D; `set_followed(node)` |
-| HUD (Phase 4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/{hud_translation,tweens}.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is world-space; `Tweens` = static recipes |
-| SFX (Phase 5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route,tone_stream}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under autoload; `notify_scene_change()` cuts transients |
-| BGM (Phase 6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; stems created in the autoload |
-| Mixing (Phase 7) | `autoloads/audio_mixing.gd` (`AudioMixing`), `scripts/{audio_mixing_translation,bus_profile}.gd` | runtime SFX reverb; per-bus gain/reverb tweens; dry-UI guarantee |
-| Audio buses | `default_bus_layout.tres` | Master / Music / Ambience / SFX / UI; SFX reverb added at runtime |
+| Godot editor | `D:\Programs\Godot_v4.7\Godot_v4.7-stable_win64.exe` | **Not on PATH.** Godot **4.7** stable (despite `project.godot` `features` saying `4.6`). GL Compatibility renderer. |
+| Foundation | `scripts/{utility,theme_profile,asset_id_scanner,event_ids}.gd`, `autoloads/{event_bus,theme_manager}.gd` | pillars: EventBus (semantic emission), ThemeManager (resolution + fallback), ThemeProfile, AssetIdScanner |
+| Object pool | `prefabs/node_pool.{gd,tscn}` | `NodePool` — generic; prewarm / acquire / release / ceiling-recycle |
+| Tween recipes | `scripts/tweens.gd` | `Tweens` — static `pop` / `fade_out` / `rise_and_fade` / `shake` |
+| Tools | `scripts/{run_asset_scan,lint_conventions,tone_stream}.gd` | SceneTree scripts (run headless); ToneStream = procedural WAV for demos/tests |
+| Impact VFX (P1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | |
+| World & Env (P2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
+| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/camera_rig.{gd,tscn}` | owns the `Camera2D`; `set_followed(node)` |
+| HUD (P4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/hud_translation.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
+| SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients |
+| BGM (P6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
+| Mixing (P7) | `autoloads/audio_mixing.gd` (`AudioMixing`), `scripts/{audio_mixing_translation,bus_profile}.gd`, `default_bus_layout.tres` | `Master / Music / Ambience / SFX / UI`; SFX reverb added at runtime |
 | Shaders | `assets/shaders/{biome_tint,hurt_vignette}.gdshader` | |
-| Demos | `scenes/foundation_demo.tscn` (main), `demo_{impact_vfx,world,camera,hud,sfx,music,mixing}` (8 total) | |
 | Theme profiles | `assets/theme_profile_{complete,sparse,forest,cave}.tres` | |
-| Tests | `tests/test_*.gd` (12 suites) | headless `SceneTree` scripts |
-| Asset worklist | `exports/asset_worklist.md` | generated by `run_asset_scan`; git-tracked |
+| Demos | `scenes/foundation_demo.tscn` (main scene), `scenes/demo_{impact_vfx,world,camera,hud,sfx,music,mixing}.tscn` | 8 total |
+| Tests | `tests/test_*.gd` (12), `tests/fixture_intensity.tres` | headless `SceneTree` scripts |
+| CI | `.github/workflows/test.yml` | import → lint → 12 suites → worklist-drift check, on every push/PR |
+| Worklist | `exports/asset_worklist.md` | generated by `run_asset_scan`; git-tracked (`.gitignore` keeps just this file under `/exports`) |
 
-## Current state (2026-09-10)
+Autoload order in `project.godot`: `EventBus`, `ThemeManager`, then the 7
+subsystems (each references the first two, so they must come after).
 
-- **Framework complete — Phases 0–7 + tooling, done and green.** 12 test suites /
-  171 checks; editor import clean; 8 demos + `run_asset_scan` + `lint_conventions`
-  + per-subsystem runtime smokes all run headless with no errors.
-  `exports/asset_worklist.md` lists `world.tiles` (the `AnimatedTileDriver`
-  default id has no shipped mapping — expected).
-- **Merged to `main` and pushed to `origin`** (`--no-ff` merge `a3f6d1b`; the
-  feature commits are kept in history). `framework/foundation` still exists
-  locally — delete it when ready (`git branch -d framework/foundation`).
-- Asset kinds live (8): sprite, audio, particle, shader, post_fx, music,
-  bus_profile, tileset. Adding a kind: `ThemeProfile` export trio +
-  `resolve_/collect_/update_from_`; `ThemeManager` fallback export +
-  `resolve_`/`has_` (2 lines each via `resolve_with_ladder`); scanner
-  `SUFFIX`/`KIND` + 2 branches. Dict-of-dicts idea **rejected** (inspector
-  clarity).
-- `state.*` (`hurt`/`lowhealth`/`paused`/`clear`) is wired into Camera (post-FX
-  grade), MusicDirector (intensity floor) and AudioMixing (transient bus grade
-  over the biome).
-- **Tooling done** (CI, `CONTRIBUTING.md`, `lint_conventions.gd`, scanner walks
-  `.tres`/nested resources). What's left is optional polish — the per-phase
-  follow-ups in `REMAINING_TASKS.md` and the "Cross-cutting / later" list
-  (per-biome sub-profiles, `Presentation` umbrella autoload if the 9 autoloads
-  get awkward, real game content). No framework work
-  remains.
+---
 
 ## How to run
 
 ```bash
 GODOT="/d/Programs/Godot_v4.7/Godot_v4.7-stable_win64.exe"
 
-# headless tests (each prints "All ... tests passed." + exits 0)
+# the 12 headless test suites (each prints "All ... tests passed." + exits 0)
 for t in test_utility test_event_bus test_theme_manager test_asset_id_scanner \
          test_node_pool test_impact_vfx test_world_environment test_camera_director \
          test_hud_polish test_sfx_player test_music_director test_audio_mixing; do
   "$GODOT" --headless --script res://tests/$t.gd
 done
 
-# convention lint + asset worklist (both run in CI)
+# lint + asset worklist (both also run in CI)
 "$GODOT" --headless --script res://scripts/lint_conventions.gd
 "$GODOT" --headless --script res://scripts/run_asset_scan.gd
 
-# run the demo scene headless for N frames
-"$GODOT" --headless --quit-after 200 res://scenes/foundation_demo.tscn
+# a demo scene, headless, for N frames
+"$GODOT" --headless --quit-after 200 res://scenes/demo_camera.tscn
 
-# full editor import / global-class registration check
+# import / global-class registration check (SEE GOTCHA H4 — dirties tracked files)
 "$GODOT" --headless --editor --quit
 ```
 
-Filter the noise: headless exit always dumps `RID allocations ... leaked`,
-`ObjectDB instances were leaked`, `Pages in use`, `Thread object is being
-destroyed` — **these are normal at-exit messages, not failures.** Grep them out.
+**At-exit noise to ignore:** every headless run ends with `RID allocations ...
+leaked`, `ObjectDB instances were leaked`, `Pages in use`, `Thread object is
+being destroyed`, `NavMesh...`. These are Godot's normal teardown chatter, not
+failures. Grep them out.
 
 ---
 
-## Gotchas (learned the hard way)
+## Gotchas
 
-1. **Autoloads must not have a matching `class_name`.** In Godot 4 an autoload
-   whose name equals a registered global class is a hard error. `EventBus` and
-   `ThemeManager` therefore have **no `class_name`** — they're referenced purely
-   by autoload name. Every future subsystem manager must do the same (distinct
-   `class_name`, or none).
+### G — GDScript / typing (this project treats **warnings as errors**)
 
-2. **Warnings are treated as errors in this project.** Any `var x := <Variant>`
-   fails to parse ("Cannot infer type" / "inferred as Variant ... treated as
-   error"). Explicitly type anything coming off `Dictionary`/`Array` access,
-   `SceneState.get_node_property_value`, `load(...)`, `.new()` on a loaded
-   script, `node.get(name)`, etc. `var x: Variant = ...` is the escape hatch.
+- **G1. `var x := <Variant>` won't compile.** Anything off `Dictionary`/`Array`
+  subscript, `Node.get(name)`, `load(...)`, `.new()` on a loaded script,
+  `SceneState.get_node_property_value`, `Object.call(...)` — type it explicitly.
+  `var x: Variant = …` is the escape hatch; `as T` narrows it.
+- **G2. `a == [x] as Array[T]` parses as `(a == [x]) as Array[T]`** → "Cannot
+  convert bool to Array[T]". Wrap: `a == ([x] as Array[T])`. Hit this in three
+  test files.
+- **G3. Assigning an untyped array to a typed `Array[T]` property via a dynamic
+  set fails at runtime** — `subsystem.some_typed_array = [x]` →
+  "Invalid assignment … value of type 'Array'". Use a typed local:
+  `var t: Array[T] = [x]; subsystem.some_typed_array = t`. **From a `.tscn`
+  the opposite is true** — `prop = [ExtResource("1")]` coerces into a typed
+  export fine.
+- **G4. Godot virtuals are the only allowed `_`-prefixed methods** (`_ready`,
+  `_process`, `_init`, `_initialize`/`_run` for SceneTree/EditorScript, …).
+  `lint_conventions.gd` enforces this; its `ALLOWED_VIRTUALS` list is the source
+  of truth.
+- **G5. `Utility.is_object_valid(p_object)` takes `Variant`, not `Object` — on
+  purpose.** Godot rejects a previously-freed instance at a typed `Object` param
+  *before the body runs*. Variant sidesteps it. Internally: `is Object` →
+  `is_instance_valid` → (`is Node` ? `not is_queued_for_deletion()` : ok);
+  `is_queued_for_deletion()` doesn't exist on `Resource`/`RefCounted`. **Always
+  use this, never `obj == null` alone** (CLAUDE.md §2B).
+- **G6. `match` accepts constant patterns** including `EventIds.FOO` and
+  comma-separated `EventIds.A, EventIds.B:`. Used in most subsystem dispatchers.
 
-3. **Exported node references need `node_paths=` in the `.tscn`.** Hand-writing
-   `node_foo = NodePath("Bar")` alone leaves `node_foo` **null** at runtime. The
-   `[node]` line must carry
-   `node_paths=PackedStringArray("node_foo", "node_bar", ...)` (see
-   `addons/brisklance/manager/interface/brisklance/brisklance.tscn`). Applies to
-   both `scenes/foundation_demo.tscn` and `prefabs/demo_impact_presenter.tscn`.
+### R — Godot resources, scenes & tweens
 
-4. **`AssetIdScanner` instantiates scenes; it does not parse `SceneState`.**
-   A `.tscn` only serialises *overridden* export values, so a state-only parse
-   found **zero** asset ids (defaults aren't stored). `scan_scene` calls
-   `packed.instantiate(PackedScene.GEN_EDIT_STATE_DISABLED)`, walks live nodes via
-   `get_property_list()`, then `root.free()`. The instance never enters the tree,
-   so `_ready` never fires. **Keep framework prefab `_init` trivial** or the scan
-   gets slow / has side effects.
+- **R1. Exported node refs need `node_paths=PackedStringArray(...)` on the
+  `[node]` line.** Hand-writing `node_foo = NodePath("Bar")` alone leaves
+  `node_foo` **null** at runtime. When overriding an exported ref on an
+  *instanced* child, put `node_paths=` on that child's `[node]` line too. Every
+  `.tscn` in `scenes/`/`prefabs/` that wires a `node_*` export does this.
+- **R2. Autoloads can't wire `@export` node refs.** Subsystem managers therefore
+  **create their pools / persistent children in `_ready()`** and hold them in
+  plain `var`s (the HudPolish / SfxPlayer / MusicDirector / CameraDirector
+  pattern), not via `@export`. An autoload's own `@export` config vars (route
+  tables etc.) also can't be set in the inspector — provide code defaults
+  (`build_default_*()` when the export is empty).
+- **R3. Autoload name must not equal a `class_name`.** `EventBus` /
+  `ThemeManager` have **no `class_name`**. Subsystem managers use
+  `class_name <Name>Subsystem` + autoload `<Name>` (distinct), or no
+  `class_name`.
+- **R4. Two tweens must never animate the same property on the same object.**
+  The music crossfade first tried one tween for both stem banks; a following
+  `set_intensity` fought it and pinned stems at the floor. Fix: each tween owns
+  a disjoint set of targets (crossfade → outgoing bank only; intensity →
+  active bank only).
+- **R5. Tween shape**: `create_tween().set_parallel(true)` runs steps together;
+  `.chain()` returns to sequential; a `tween_callback` after `.chain()` fires
+  once, after every parallel step. Kill the previous tween
+  (`if Utility.is_object_valid(t): t.kill()`) before re-tweening the same nodes.
+- **R6. Pool auto-release uses `CONNECT_ONE_SHOT`.** `signal.connect(cb.bind(x),
+  CONNECT_ONE_SHOT)` — a fresh bound callable each acquire, auto-disconnected on
+  fire. `is_connected()` can't dedupe bound callables, so don't rely on it.
+- **R7. Hit-stop / time-freeze**: `Engine.time_scale = 0.0001`, never `0.0` (a
+  true zero freezes `_process` delta, so a delta-based restore never runs). Pair
+  with `get_tree().create_timer(t, true, false, true)` — the 4th arg
+  `ignore_time_scale = true` — so the restore timer ticks while frozen.
+- **R8. `ScreenShaderOverlay` is shared** by the World atmosphere overlay and the
+  Camera state-grade. `configure()` swaps instantly (resets `modulate.a`);
+  `fade_to()` alpha-crossfades.
+- **R9. A stray NUL byte broke a source file once** (`"%s\0%s"` →
+  "Unterminated string", no line number). If you get an unexplained
+  "Unterminated string": `file scripts/*.gd` (looks for `data` vs `ASCII text`),
+  then `perl -0pi -e 's/\x00//g' <file>`.
 
-5. **`Utility.is_object_valid(p_object)` takes `Variant`, not `Object` — on
-   purpose.** Godot's runtime rejects a previously-freed instance passed to a
-   typed `Object` parameter *before the body runs* ("not a subclass of the
-   expected argument class"). Variant sidesteps that. Internally: `is Object` →
-   `is_instance_valid` → (`is Node` ? `not is_queued_for_deletion()` : ok).
-   `is_queued_for_deletion()` doesn't exist on `Resource`/`RefCounted`.
+### H — Headless / CLI / tooling
 
-6. **`ThemeManager.resolve_audio` / `resolve_particle` can return `null`.**
-   Their final fallback (`profile_fallback_audio` / `profile_fallback_particle`)
-   is unset until a project configures it. `resolve_sprite` always returns a
-   texture (`res://icon.svg` default). Don't assume non-null for audio/particle.
+- **H1. `--script` runs do NOT load autoloads.** A `SceneTree` test that
+  `preload`s a script naming `EventBus`/`ThemeManager`/any autoload as a bare
+  identifier fails to *compile* ("Identifier not found") — which also disables
+  its `static` methods. **Pattern:** each subsystem's pure logic lives in an
+  autoload-free `scripts/<name>_translation.gd` (`class_name`, static, refs only
+  other `class_name` globals + `*_route`/`*_intensity` resources) and is
+  unit-tested there. Node wiring is verified by running a demo scene
+  (`godot --headless res://scenes/<demo>.tscn`) or a throwaway smoke scene.
+- **H2. EditorScripts can't be driven headless.**
+  `--headless --editor --script <EditorScript>` hangs (editor stays open);
+  `--script` alone runs it as a plain script, not `_run()`. Runnable tools
+  (`run_asset_scan`, `lint_conventions`) are `extends SceneTree` with
+  `_initialize()` + `quit(code)`.
+- **H3. `godot --headless --import` hung once (~120 s+) inside a loop.** Prefer
+  `--editor --quit`, or run `--import` alone with a generous timeout.
+- **H4. `--headless --editor --quit` normalizes older resources** — rewrites
+  `format=3` `.tres`/`.tscn`/`project.godot` to Godot 4.7's sub-format (uid in
+  header, `load_steps` dropped, `uid=` on ext_resources, `ShaderMaterial`→
+  `Material` type hints). Harmless & idempotent but **dirties tracked files**.
+  `git checkout` those specific files before committing unrelated work, or commit
+  the normalization alone. `--script` runs alone don't do this. **Do not
+  `git checkout -- .` to clean it — that also nukes your own uncommitted edits**
+  (learned the hard way). (`570d980` bundled such churn into a docs commit —
+  left as-is, not worth force-pushing public history.)
+- **H5. Smoke scenes** are throwaway `scenes/_smoke_*.{gd,tscn}` — run, then
+  `rm` both files **and** any `_smoke_*.uid` the import generated (one slipped
+  into an early commit). Never commit them.
+- **H6. `bc` is not installed** in the Git Bash env; sum in the shell loop.
 
-6a. **EditorScripts can't be run headless.**
-   `godot --headless --editor --script <EditorScript>` hangs (editor stays open);
-   `--script` alone runs the file as a plain script, not `_run()`. Runnable
-   tools (`run_asset_scan.gd`) are `extends SceneTree` with a `_initialize()` +
-   `quit(0)`, invoked `godot --headless --script res://...`.
+### F — Framework-specific
 
-6d. **`--headless --editor --quit` normalizes older resources.** Godot 4.7
-   rewrites `format=3` `.tres`/`.tscn`/`project.godot` to its current sub-format
-   (uid in the header, `load_steps` dropped, `uid=` on ext_resources, base type
-   hints like `ShaderMaterial`→`Material`). Harmless and idempotent, but it
-   dirties tracked files — `git checkout` them before committing unrelated work,
-   or commit the normalization on its own. `--script` runs alone do **not** do
-   this; only `--editor`. (`570d980` accidentally bundled such churn into a docs
-   commit — benign, left as-is rather than force-pushing public history.)
-
-6b. **`--script` runs do NOT load autoloads.** A `SceneTree` test that
-   `preload`s a script naming `EventBus` / `ThemeManager` / any autoload as a
-   bare identifier gets `Parse/Compile Error: Identifier not found` — and that
-   also disables the file's *static* methods. Pattern: put each subsystem's pure
-   logic in an autoload-free `scripts/<name>_translation.gd` (`class_name`,
-   static, refs only other `class_name` globals + `ImpactIntensity`-style
-   resources) and unit-test that. Verify Node wiring with a scene run
-   (`godot --headless res://scenes/<demo>.tscn`) or a throwaway smoke scene.
-
-6c. **Hit-stop / time-freeze:** use `Engine.time_scale = 0.0001`, never `0.0`
-   (a true zero freezes `_process` delta, so any delta-based timeout never
-   fires). Pair with `get_tree().create_timer(t, true, false, true)` — 4th arg
-   `ignore_time_scale = true` — so the restore timer ticks while frozen.
-
-7. **A stray NUL byte crept into a source file once** (`"%s\0%s"` →
-   "Unterminated string" with no line number). If you get an unexplained
-   "Unterminated string", check `file scripts/*.gd` for `data` vs `ASCII text`
-   and `perl -0pi -e 's/\x00//g'` it.
-
-8. **`godot --headless --import` inside a loop hung once** (~120s+). The plain
-   `--editor --quit` import completes fine; prefer that, or run `--import` alone
-   with a generous timeout.
-
-9. **Scanner scope**: only ever scan `res://scenes` / `res://prefabs`, never
-   `res://` root (would try to instantiate addon scenes).
+- **F1. `AssetIdScanner` instantiates scenes; it does not parse `SceneState`.**
+  A `.tscn` only serialises *overridden* exports, so a state-only parse found
+  **zero** ids. `scan_scene` → `packed.instantiate(GEN_EDIT_STATE_DISABLED)`,
+  walks live nodes, `root.free()`. Never enters the tree (`_ready` never fires).
+  **Keep framework prefab `_init` trivial.** It also walks `.tres`/`.res` and
+  recurses into script-backed `Resource` values (arrays + dicts), gated on
+  `PROPERTY_USAGE_SCRIPT_VARIABLE`, with a per-file instance-id cycle guard.
+  `run_asset_scan` scans `res://scenes` + `res://prefabs` + `res://assets`.
+  **Code-built defaults are invisible** (e.g. `build_default_intensity_table`) —
+  you can't scan code.
+- **F2. `resolve_sprite` never returns null** (`res://icon.svg` last resort).
+  **Every other `resolve_<kind>` can return null** until the project sets
+  `ThemeManager.profile_fallback_<kind>`. Each subsystem degrades gracefully on
+  null — see the "missing →" column in `THEME_PROFILE_SLOTS.md`.
+- **F3. `impact.spark` is used as two kinds**: a *particle* id (the framework
+  default in `ImpactTranslation.build_default_intensity_table`) and a *sprite*
+  id (`DemoImpactPresenter` in the foundation demo only). Not a conflict — they
+  go in different `*_assets` dicts.
+- **F4. Adding an asset kind** (currently 8): `ThemeProfile` gets
+  `<kind>_assets` export + `default_<kind>` + `resolve_<kind>_or_null` +
+  `collect_<kind>_ids` + `update_from_<kind>_assets`; `ThemeManager` gets
+  `profile_fallback_<kind>` + 2-line `resolve_<kind>` / `has_<kind>` (via
+  `resolve_with_ladder` / `profile_asset_or_null` / `profile_default_or_null`);
+  `AssetIdScanner` gets `<KIND>_ID_SUFFIX` / `<KIND>_KIND` + a `classify_property`
+  branch (more specific suffix first — `_post_fx_asset_id` before
+  `_shader_asset_id`) + an `is_reference_mapped` branch; add a `has_<kind>` stub
+  to `tests/test_asset_id_scanner.gd`'s `StubThemeManager`. **The
+  dict-of-dicts `ThemeProfile` refactor was considered and rejected** (explicit
+  typed exports read better in the inspector).
+- **F5. No `ThemeProfile` inheritance.** A biome swap replaces the *whole* active
+  profile. Shared slots (`sfx.*`, `state.*`) must be repeated in every biome
+  profile, or the game must swap back to a base profile for non-biome moments.
+  (Follow-up: per-biome sub-resources.)
+- **F6. Test harness**: `extends SceneTree`, `func _initialize()`, `expect_int`/
+  `expect_true`/`expect_str` returning 0/1, tally into `failure_count`,
+  `push_error` + `quit(1)` on failure else `print("All ... passed.") ; quit(0)`.
+  Copy an existing `tests/test_*.gd`.
 
 ---
 
-## TODO (see REMAINING_TASKS.md for the full breakdown)
+## TODO
 
-**All 7 subsystems + the `music`/`bus_profile` kinds + the ThemeManager refactor:
-done.** Remaining work is polish only — see the per-phase follow-ups and
-"Cross-cutting / later" in `REMAINING_TASKS.md`.
+**Nothing is load-bearing.** The framework is done; these are refinements, in
+rough priority order. Full context + per-phase lists in `REMAINING_TASKS.md`.
 
-**Open follow-ups (see REMAINING_TASKS.md):** scanner should walk exported
-`Resource` arrays / `.tres` (impact intensity table + world biome ids are
-invisible to it now); `HitFlash` shader path now that `resolve_shader` exists;
-animated tiles + `tileset` kind (Phase 2).
+### Small, self-contained
 
-**Deferred / trigger-based:**
+- [ ] `HitFlash` shader path — use `flash_shader_asset_id` + `resolve_shader`
+  (exists now); currently a `modulate` pulse.
+- [ ] `combat.death` / `entity.destroyed` → a death particle burst in `ImpactVfx`.
+- [ ] `ui.confirm` / `ui.cancel` widget feedback in `HudPolish` (only `ui.hover`
+  is wired).
+- [ ] Chromatic-aberration: a dedicated event/param (the grade shader exposes
+  the uniform, nothing drives it).
+- [ ] `CameraRig.focus_on(rect)` (zoom-to-fit) — only `focus_on(position)` exists.
+- [ ] Voice stealing / priority in `SfxVoicePool` (at the ceiling `NodePool`
+  recycles the oldest, which may cut an important sound).
+- [ ] `MusicDirector` sample-lock is best-effort (all stems `play()` in one
+  frame); `music_stem_count` is fixed after `_ready()`.
+- [ ] Per-bus EQ in `BusProfile` / `AudioMixing` (only gain + reverb now).
+- [ ] `SFX_Reverb` as a real send bus (currently a direct effect on `SFX`).
+- [ ] `default_tileset` + real shipped tiles so `world.tiles` leaves the worklist.
+- [ ] Delete the merged `framework/foundation` branch.
 
-- [ ] `Presentation` umbrella autoload — only if the 9 autoloads become awkward
-  for load order / teardown.
-- [ ] Per-biome `ThemeProfile` sub-resources.
-- [ ] Convention-lint script (`$`, `get_node(`, `func _`, untyped decls).
-- [ ] `AssetIdScanner` walking `.tres` / exported `Resource` arrays.
+### Larger / cross-cutting
 
-CI (`.github/workflows/test.yml`) and `CONTRIBUTING.md` now exist.
+- [ ] A `font` asset kind (9th) for `FloatingDamageText`; screen-space (vs
+  world-space) floating-text option; `CatchUpBar` textured fills via
+  `*_sprite_asset_id`.
+- [ ] Per-biome `ThemeProfile` sub-resources (see F5).
+- [ ] `Presentation` umbrella autoload owning the 7 subsystems as children — only
+  if the 9 autoloads become awkward for load order / teardown / a single
+  `notify_scene_change()` fan-out.
+- [ ] Editor dock that runs `run_asset_scan` on demand (Brisklance-style).
+- [ ] Real game content in `/scenes` + `/prefabs` (out of framework scope).
+
+### Done — do not re-open
+
+Convention-lint script · `AssetIdScanner` walking `.tres`/resource arrays · CI ·
+`CONTRIBUTING.md` · `THEME_PROFILE_SLOTS.md` · `tileset` kind + `AnimatedTileDriver` ·
+`state.*` → audio · `music`/`bus_profile` kinds · ThemeManager `resolve_with_ladder`
+refactor · merge to `main` + push.
 
 ---
 
-## Convention reminders (full text in CLAUDE.md)
+## Convention reminders (full text in CLAUDE.md — it overrides defaults)
 
-- Static typing everywhere. No `_`-prefixed privates. No `$` / `get_node()` —
-  exported `node_`-prefixed refs only, connected in `_ready()`.
+- Static typing on every var / param / return.
+- No `_`-prefixed privates (Godot virtuals excepted). No `$` / `get_node()` —
+  exported `node_`-prefixed refs only, connected programmatically in `_ready()`.
 - Signal handlers named `handle_<node>_<signal>()`.
-- Reference-type (`Array`/`Dictionary`/`Object`) property updates go through
-  `update_from_<property>()`, called explicitly after mutation.
+- Reference-type (`Array`/`Dictionary`/`Object`) property mutation → call
+  `update_from_<property>()` explicitly afterward.
 - Standalone-scene root scripts implement `static get_packed_scene()`.
-- Object validity: `Utility.is_object_valid(obj)`, never `obj == null` alone.
+- Object validity: `Utility.is_object_valid(obj)`.
 - Early returns over nested `if`/`else`.
+- Files live only in the directories `CLAUDE.md §1` lists.
