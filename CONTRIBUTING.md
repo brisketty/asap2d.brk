@@ -14,12 +14,13 @@ for t in test_utility test_event_bus test_theme_manager test_asset_id_scanner \
          test_hud_polish test_sfx_player test_music_director test_audio_mixing; do
   godot --headless --script res://tests/$t.gd
 done
-godot --headless --editor --quit                    # import / global-class check
-godot --headless --script res://scripts/run_asset_scan.gd   # regenerate the worklist
+godot --headless --editor --quit                             # import / global-class check
+godot --headless --script res://scripts/lint_conventions.gd  # $ / get_node / _private lint
+godot --headless --script res://scripts/run_asset_scan.gd    # regenerate the worklist
 ```
 
 CI (`.github/workflows/test.yml`) runs all of this on every push and PR, and
-fails if `exports/asset_worklist.md` drifts.
+fails on a lint violation or `exports/asset_worklist.md` drift.
 
 ## The four pillars (never violate)
 

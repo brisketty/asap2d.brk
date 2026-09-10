@@ -337,17 +337,33 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
   import on every push/PR and fails on `asset_worklist.md` drift.
 - [x] `CONTRIBUTING.md` — pillars + the "adding a subsystem" checklist + coding
   quick reference.
-- [ ] Convention-lint script (`$`, `get_node(`, `func _`, untyped decls) — CI
-  could run it; low priority since the tests + warnings-as-errors already catch
-  most of it.
-- [ ] `AssetIdScanner`: walk exported `Resource` arrays / `.tres` under
-  `res://assets` (intensity tables, world biome ids, bus profiles are invisible
-  to the scanner now — it only walks scene nodes).
+- [x] Convention-lint script — `scripts/lint_conventions.gd` flags `$`,
+  `get_node(`/`get_node_or_null(`, and non-virtual `_`-prefixed methods across
+  `scripts`/`autoloads`/`prefabs`/`scenes`. Wired into CI. (Untyped-decl checking
+  left to warnings-as-errors.)
+- [x] `AssetIdScanner` walks `.tres` / `.res` and nested script-backed
+  `Resource`s (arrays + dictionaries included) — `scan_resource`,
+  `collect_ids_from_object` / `recurse_into_value`, `PROPERTY_USAGE_SCRIPT_VARIABLE`
+  filter, instance-id cycle guard. `run_asset_scan` now also scans `res://assets`.
+  Code-built defaults (e.g. `ImpactTranslation.build_default_intensity_table`)
+  are still invisible — you can't scan code.
 - [ ] Populate `/scenes` / `/prefabs` real game content (out of framework scope).
 
 ---
 
 ## History
+
+### 2026-09-10 — Scanner deepening + convention lint
+
+- `AssetIdScanner` now walks `.tres`/`.res` and recurses into script-backed
+  `Resource` values (and arrays/dictionaries of them), not just scene nodes.
+  Property walk is gated on `PROPERTY_USAGE_SCRIPT_VARIABLE`; a per-file
+  instance-id set guards shared-resource cycles. `run_asset_scan` scans
+  `res://assets` too. `tests/fixture_intensity.tres` covers it (5 new checks;
+  165 total).
+- `scripts/lint_conventions.gd` — `$` / `get_node` / non-virtual `_`-method
+  lint, clean across the framework, wired into `.github/workflows/test.yml`
+  after the import step.
 
 ### 2026-09-10 — CI + CONTRIBUTING
 

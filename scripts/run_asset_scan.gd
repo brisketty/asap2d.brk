@@ -3,7 +3,8 @@ extends SceneTree
 ##
 ##   godot --headless --script res://scripts/run_asset_scan.gd
 ##
-##   1. scans res://scenes and res://prefabs for scannable asset ids,
+##   1. scans res://scenes, res://prefabs and res://assets for scannable asset
+##      ids (in scenes, .tres resources, and nested resource arrays),
 ##   2. diffs them against the ThemeProfiles found in res://assets (an id mapped
 ##      in the basis profile is considered "has art" and dropped),
 ##   3. prints a prioritized worklist and writes exports/asset_worklist.md.
@@ -12,7 +13,7 @@ extends SceneTree
 ## throwaway ThemeManager from the on-disk profiles rather than touching the
 ## autoload.
 
-const SCAN_ROOTS: PackedStringArray = ["res://scenes", "res://prefabs"]
+const SCAN_ROOTS: PackedStringArray = ["res://scenes", "res://prefabs", "res://assets"]
 const ASSETS_DIRECTORY := "res://assets"
 const REPORT_PATH := "res://exports/asset_worklist.md"
 

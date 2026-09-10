@@ -72,6 +72,19 @@ func _initialize() -> void:
 	var scene_paths := AssetIdScanner.collect_scene_paths("res://scenes")
 	failure_count += expect_true("demo scene discovered", scene_paths.has("res://scenes/foundation_demo.tscn"))
 
+	# --- scans scripted .tres for nested suffixed ids ---
+	var scannable := AssetIdScanner.collect_scannable_paths("res://tests")
+	failure_count += expect_true("resource files are scannable", scannable.has("res://tests/fixture_intensity.tres"))
+
+	var from_resource := AssetIdScanner.scan_resource("res://tests/fixture_intensity.tres")
+	failure_count += expect_true("scans a scripted .tres", has_asset(from_resource, &"fixture.spark"))
+	failure_count += expect_true("classifies the nested particle id",
+		kind_of(from_resource, &"fixture.spark") == AssetIdScanner.PARTICLE_KIND)
+	failure_count += expect_true("also picks up the nested event id",
+		kind_of(from_resource, &"impact.basic") == AssetIdScanner.EVENT_KIND)
+	failure_count += expect_true("engine .tres (no script) yields nothing",
+		AssetIdScanner.scan_resource("res://assets/shader_forest_tint.tres").is_empty())
+
 	if failure_count > 0:
 		push_error("%d asset-id-scanner test(s) failed." % failure_count)
 		quit(1)
@@ -85,6 +98,13 @@ func has_asset(p_tasks: Array[Dictionary], p_asset_id: StringName) -> bool:
 		if task[&"asset_id"] == p_asset_id:
 			return true
 	return false
+
+
+func kind_of(p_references: Array[Dictionary], p_asset_id: StringName) -> StringName:
+	for reference: Dictionary in p_references:
+		if reference[&"asset_id"] == p_asset_id:
+			return reference[&"kind"]
+	return &""
 
 
 func expect_int(p_label: String, p_actual: int, p_expected: int) -> int:

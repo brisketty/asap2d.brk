@@ -16,7 +16,7 @@ document — update it when reality changes.
 | What | Path | Notes |
 | --- | --- | --- |
 | Godot editor | `D:\Programs\Godot_v4.7\Godot_v4.7-stable_win64.exe` | **Not on PATH.** Godot 4.7 stable. `project.godot` says features `4.6` + GL Compatibility. |
-| Foundation logic | `scripts/`, `autoloads/` | `Utility`, `ThemeProfile`, `AssetIdScanner`, `EventIds`, `run_asset_scan`; `EventBus`, `ThemeManager` |
+| Foundation logic | `scripts/`, `autoloads/` | `Utility`, `ThemeProfile`, `AssetIdScanner`, `EventIds`, `run_asset_scan`, `lint_conventions`; `EventBus`, `ThemeManager` |
 | Object pool | `prefabs/node_pool.{gd,tscn}` | `NodePool` — generic |
 | Impact VFX (Phase 1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*.{gd,tscn}`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | translation autoload-free + tested |
 | World & Env (Phase 2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay}.{gd,tscn}` | fixed id set, profile maps per biome |
@@ -46,11 +46,12 @@ document — update it when reality changes.
   `ThemeManager` fallback export + `resolve_`/`has_` (2 lines each via
   `resolve_with_ladder`); scanner `SUFFIX`/`KIND` + 2 branches. Dict-of-dicts
   idea **rejected** (inspector clarity).
-- **The 7 subsystems are done.** What's left is polish: the per-phase follow-ups
-  in `REMAINING_TASKS.md` and the "Cross-cutting / later" list (scanner walking
-  `.tres`/`Resource` arrays, `EventIds` migration audit, CI, `CONTRIBUTING.md`,
-  a lint script, the `Presentation` umbrella autoload if 10 autoloads get
-  awkward). No subsystem work remains.
+- **The 7 subsystems + tooling are done** (CI, `CONTRIBUTING.md`,
+  `lint_conventions.gd`, scanner walks `.tres`/nested resources). What's left is
+  optional polish — the per-phase follow-ups in `REMAINING_TASKS.md` and the
+  "Cross-cutting / later" list (per-biome sub-profiles, `Presentation` umbrella
+  autoload if the 9 autoloads get awkward, real game content). No framework work
+  remains.
 
 ## How to run
 
@@ -64,7 +65,8 @@ for t in test_utility test_event_bus test_theme_manager test_asset_id_scanner \
   "$GODOT" --headless --script res://tests/$t.gd
 done
 
-# generate the asset worklist -> exports/asset_worklist.md
+# convention lint + asset worklist (both run in CI)
+"$GODOT" --headless --script res://scripts/lint_conventions.gd
 "$GODOT" --headless --script res://scripts/run_asset_scan.gd
 
 # run the demo scene headless for N frames

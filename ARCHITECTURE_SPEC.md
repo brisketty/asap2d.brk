@@ -198,14 +198,18 @@ Constants: `{SPRITE,AUDIO,PARTICLE,SHADER,POST_FX,MUSIC}_ID_SUFFIX`
   `.tscn`, scan each.
 - `collect_scene_paths(p_root_path) -> PackedStringArray` — recursive `.tscn`
   walk.
-- `scan_scene(p_scene_path) -> Array[Dictionary]` — **instantiates** the scene
-  with `PackedScene.GEN_EDIT_STATE_DISABLED` (never entered into the tree, so
-  `_ready` never runs) and walks live nodes. A `.tscn` `SceneState` only stores
-  *overridden* export values, so a static state-only parse misses ids left at
-  their script default — instantiation is required.
-- `collect_ids_from_node(p_node, p_root, p_scene_path, r_results)` — for each
-  property in `get_property_list()` whose name `classify_property`s to a kind,
-  append `{ scene_path, node_path, property, asset_id, kind }`; recurse children.
+- `scan_file` dispatches by extension: `scan_scene` **instantiates** the `.tscn`
+  with `GEN_EDIT_STATE_DISABLED` (a `SceneState` only stores *overridden* exports,
+  so instantiation is required to see defaults) and walks live nodes;
+  `scan_resource` `load()`s a `.tres`/`.res` and walks it if it has a script
+  (engine resources carry no framework exports).
+- `collect_ids_from_object` / `recurse_into_value` — for each
+  `PROPERTY_USAGE_SCRIPT_VARIABLE` property: if it `classify_property`s to a kind,
+  record `{ scene_path, node_path, property, asset_id, kind }`; otherwise, if the
+  value is a script-backed `Resource` (or an `Array`/`Dictionary` of them),
+  recurse into it. A per-file instance-id set guards shared-resource cycles.
+  Node children are walked too. **Code-built defaults are invisible** — only
+  declared exports are seen.
 - `classify_property(p_property_name) -> StringName` — suffix match → kind or
   `&""`.
 - `build_task_list(p_references, p_theme_manager) -> Array[Dictionary]` — drops
@@ -394,9 +398,10 @@ Autoload `ImpactVfx`, `class_name ImpactVfxSubsystem` (`autoloads/impact_vfx.gd`
   (§C has its own event→trauma table); the subsystem does not emit `camera.*`.
 - **Demo:** `scenes/demo_impact_vfx.tscn` — dummy target with all three
   components + four emit buttons.
-- **Known gap:** intensity-table `*_asset_id`s live on a `.tres`/autoload, not a
-  scene node, so `AssetIdScanner` does not see them (it walks scenes only). A
-  "scan exported `Resource` arrays" follow-up is in `REMAINING_TASKS.md`.
+- **Scanner note:** the intensity table's `*_asset_id`s are seen by
+  `AssetIdScanner` when the table is a `.tres` (it recurses into script-backed
+  resources), but **not** when it is the code default from
+  `ImpactTranslation.build_default_intensity_table()` — code can't be scanned.
 
 ### B. World & Environment Subsystem — `WorldEnvironment2D`  ✅ implemented (Phase 2)
 
@@ -627,10 +632,17 @@ one `ThemeProfile` export trio + `resolve_/collect_/update_from_`, one
 See Foundation §7. The demo emits via `EventIds.IMPACT_BASIC`. Every subsystem
 consuming or emitting an id references a constant, never a literal.
 
-### Scanner tooling — `run_asset_scan` ✅ implemented
+### CI & lint — ✅ implemented
 
-See Foundation §9. Future nicety (planned): a Brisklance-style dock panel that
-runs it on demand and shows the worklist in the editor.
+- `.github/workflows/test.yml` — on every push/PR: setup-godot 4.7, import,
+  `lint_conventions.gd`, the 12 headless suites, then regenerate
+  `exports/asset_worklist.md` and fail on drift.
+- `scripts/lint_conventions.gd` — a `SceneTree` script flagging `$` /
+  `get_node(` / non-virtual `_`-prefixed methods across
+  `scripts`/`autoloads`/`prefabs`/`scenes` (the CLAUDE.md rules the compiler
+  doesn't enforce). Untyped decls are already caught by warnings-as-errors.
+- `run_asset_scan` (Foundation §9) writes `exports/asset_worklist.md`.
+- **Planned:** a Brisklance-style editor dock that runs the scan on demand.
 
 ---
 
