@@ -58,7 +58,7 @@ up. **Living document — update it when reality changes.**
 | World & Env (P2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
 | Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade |
 | HUD (P4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/hud_translation.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
-| SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients |
+| SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route,state_sfx_set}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients; `state_sfx_table` = opt-in enter/loop/exit sounds for `state.*` |
 | BGM (P6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
 | Mixing (P7) | `autoloads/audio_mixing.gd` (`AudioMixing`), `scripts/{audio_mixing_translation,bus_profile}.gd`, `default_bus_layout.tres` | `Master / Music / Ambience / SFX / UI`; SFX reverb added at runtime |
 | Shaders | `assets/shaders/{biome_tint,hurt_vignette}.gdshader` | |
@@ -236,7 +236,8 @@ failures. Grep them out.
   default in `ImpactTranslation.build_default_intensity_table`) and a *sprite*
   id (`DemoImpactPresenter` in the foundation demo only). Not a conflict — they
   go in different `*_assets` dicts.
-- **F4. Adding an asset kind** (currently 8): `ThemeProfile` gets
+- **F4. Adding an asset kind** (currently 9 — `screen_tile` was the latest,
+  added for the Camera border overlay): `ThemeProfile` gets
   `<kind>_assets` export + `default_<kind>` + `resolve_<kind>_or_null` +
   `collect_<kind>_ids` + `update_from_<kind>_assets`; `ThemeManager` gets
   `profile_fallback_<kind>` + 2-line `resolve_<kind>` / `has_<kind>` (via
@@ -255,6 +256,20 @@ failures. Grep them out.
   `expect_true`/`expect_str` returning 0/1, tally into `failure_count`,
   `push_error` + `quit(1)` on failure else `print("All ... passed.") ; quit(0)`.
   Copy an existing `tests/test_*.gd`.
+- **F7. `AssetIdScanner` only classifies single-id properties, not collections.**
+  `SfxRoute.route_audio_variation_ids` (`Array[StringName]`) is a real audio-id
+  list but doesn't end in a scannable suffix on a scalar, so
+  `recurse_into_value` walks into it (it's an `Array`) but finds `StringName`
+  elements, not `Resource`/`Array`/`Dictionary`, and stops — invisible to
+  `run_asset_scan`. List variation ids by hand until the scanner grows
+  array-of-id support (see TODO).
+- **F8. Two different "random unit" conventions coexist in `*_translation.gd`
+  pure functions** — don't mix them up. `SfxTranslation.random_pitch_scale` /
+  `random_volume_db` (and `CameraTranslation`'s noise sampling) take a unit in
+  **-1..1** (an *offset* around a center). `SfxTranslation.pick_variation_id` /
+  `ScreenTileTranslation.pick_variation_index` take a unit in **0..1** (an
+  *index* into a list). Both clamp defensively, so a swapped range degrades
+  rather than crashes, but picks the wrong end of the list / wrong pitch bias.
 
 ---
 
@@ -281,10 +296,27 @@ rough priority order. Full context + per-phase lists in `REMAINING_TASKS.md`.
 - [ ] `SFX_Reverb` as a real send bus (currently a direct effect on `SFX`).
 - [ ] `default_tileset` + real shipped tiles so `world.tiles` leaves the worklist.
 - [ ] Delete the merged `framework/foundation` branch.
+- [ ] `AssetIdScanner` doesn't scan `Array[StringName]` id properties (see F7) —
+  `route_audio_variation_ids` and any future variation-pool field is invisible
+  to `run_asset_scan`; needs a `recurse_into_value` branch that classifies
+  string elements of a suffix-matching array property.
+- [ ] `CameraRig` follow is a hard per-frame snap to the target, no smoothing —
+  considered adding an optional lerp/deadzone follow mode while investigating
+  "micro movement after a shake" (turned out to be the demo's own ambient
+  wander, not a shake bug — see `DEMO_SMOKE_TESTS.md` § `demo_camera.tscn`),
+  deferred since nothing needed it yet.
+- [ ] `ScreenTileBorder` re-picks random tile variations on every
+  `get_viewport().size_changed` rebuild (no stable per-position seed) — fine
+  for a one-off resize, could look jarring if a game resizes its window
+  frequently at runtime.
+- [ ] `SfxPlayer.state_sfx_table` only has room for one active loop
+  (`state_loop_player`); two `state.*` events firing back-to-back without a
+  `state.clear` between them just retargets the same player (last-wins), no
+  crossfade.
 
 ### Larger / cross-cutting
 
-- [ ] A `font` asset kind (9th) for `FloatingDamageText`; screen-space (vs
+- [ ] A `font` asset kind (10th) for `FloatingDamageText`; screen-space (vs
   world-space) floating-text option; `CatchUpBar` textured fills via
   `*_sprite_asset_id`.
 - [ ] Per-biome `ThemeProfile` sub-resources (see F5).
@@ -299,7 +331,11 @@ rough priority order. Full context + per-phase lists in `REMAINING_TASKS.md`.
 Convention-lint script · `AssetIdScanner` walking `.tres`/resource arrays · CI ·
 `CONTRIBUTING.md` · `THEME_PROFILE_SLOTS.md` · `tileset` kind + `AnimatedTileDriver` ·
 `state.*` → audio · `music`/`bus_profile` kinds · ThemeManager `resolve_with_ladder`
-refactor · merge to `main` + push.
+refactor · merge to `main` + push · `screen_tile` kind + `ScreenTileBorder` ·
+`CameraRig.shake_intensity_scale` + bigger Crit shake default ·
+`SfxRoute.route_audio_variation_ids` · `StateSfxSet` +
+`SfxPlayer.state_sfx_table` enter/loop/exit lifecycle · `DEMO_SMOKE_TESTS.md` ·
+`THEME_PROFILE_FIELDS.md`.
 
 ---
 
