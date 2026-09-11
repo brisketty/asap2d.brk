@@ -22,6 +22,10 @@ signal active_profile_changed(p_profile_id: StringName)
 @export var profile_fallback_music: AudioStream
 @export var profile_fallback_bus_profile: BusProfile
 @export var profile_fallback_tileset: TileSet
+## Left unset by default - a missing screen-tile border means "show nothing",
+## the correct defensive default (unlike sprite/tileset, there is no engine
+## placeholder that would make sense here).
+@export var profile_fallback_screen_tile: ScreenTileSet
 
 var active_profile: ThemeProfile:
 	set(p_value):
@@ -141,6 +145,12 @@ func resolve_tileset(p_asset_id: StringName) -> TileSet:
 		profile_default_or_null(&"default_tileset"), profile_fallback_tileset) as TileSet
 
 
+func resolve_screen_tile(p_asset_id: StringName) -> ScreenTileSet:
+	return resolve_with_ladder("screen-tile", p_asset_id,
+		profile_asset_or_null(&"resolve_screen_tile_or_null", p_asset_id),
+		profile_default_or_null(&"default_screen_tile"), profile_fallback_screen_tile) as ScreenTileSet
+
+
 func has_sprite(p_asset_id: StringName) -> bool:
 	return Utility.is_object_valid(profile_asset_or_null(&"resolve_sprite_or_null", p_asset_id))
 
@@ -171,3 +181,7 @@ func has_bus_profile(p_asset_id: StringName) -> bool:
 
 func has_tileset(p_asset_id: StringName) -> bool:
 	return Utility.is_object_valid(profile_asset_or_null(&"resolve_tileset_or_null", p_asset_id))
+
+
+func has_screen_tile(p_asset_id: StringName) -> bool:
+	return Utility.is_object_valid(profile_asset_or_null(&"resolve_screen_tile_or_null", p_asset_id))

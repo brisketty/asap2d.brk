@@ -21,19 +21,27 @@ static func shake_amount(p_trauma: float) -> float:
 	return p_trauma * p_trauma
 
 
-## `p_noise_x` / `p_noise_y` are noise samples in -1..1.
+## `p_noise_x` / `p_noise_y` are noise samples in -1..1. `p_intensity_scale`
+## multiplies the final result - a single knob (`CameraRig.shake_intensity_scale`)
+## to make every shake punchier/softer without retuning the trauma table.
 static func compute_offset(
 	p_trauma: float,
 	p_max_offset: Vector2,
 	p_noise_x: float,
 	p_noise_y: float,
+	p_intensity_scale: float = 1.0,
 ) -> Vector2:
-	var amount := shake_amount(p_trauma)
+	var amount := shake_amount(p_trauma) * p_intensity_scale
 	return Vector2(p_max_offset.x * amount * p_noise_x, p_max_offset.y * amount * p_noise_y)
 
 
-static func compute_rotation(p_trauma: float, p_max_roll: float, p_noise_r: float) -> float:
-	return p_max_roll * shake_amount(p_trauma) * p_noise_r
+static func compute_rotation(
+	p_trauma: float,
+	p_max_roll: float,
+	p_noise_r: float,
+	p_intensity_scale: float = 1.0,
+) -> float:
+	return p_max_roll * shake_amount(p_trauma) * p_intensity_scale * p_noise_r
 
 
 # --- event -> trauma table ---
@@ -50,9 +58,9 @@ static func build_lookup(p_table: Array[CameraTrauma]) -> Dictionary:
 static func build_default_trauma_table() -> Array[CameraTrauma]:
 	return [
 		make_trauma(EventIds.IMPACT_HEAVY, 0.35),
-		make_trauma(EventIds.IMPACT_CRIT, 0.6),
+		make_trauma(EventIds.IMPACT_CRIT, 0.75),
 		make_trauma(EventIds.COMBAT_HITSTOP, 0.2),
-		make_trauma(EventIds.COMBAT_DEATH, 0.8),
+		make_trauma(EventIds.COMBAT_DEATH, 0.85),
 	]
 
 

@@ -47,6 +47,30 @@ func _initialize() -> void:
 	failure_count += expect_int("build_lookup skips invalid rows",
 		SfxTranslation.build_lookup(with_invalid).size(), 1)
 
+	# --- camera effect routes (momentary, same treatment as impact) ---
+	var shake_route: SfxRoute = SfxTranslation.resolve_route(lookup, &"camera.shake")
+	failure_count += expect_true("camera.shake route resolves", Utility.is_object_valid(shake_route))
+	var zoom_route: SfxRoute = SfxTranslation.resolve_route(lookup, &"camera.zoom")
+	failure_count += expect_true("camera.zoom route resolves", Utility.is_object_valid(zoom_route))
+
+	# --- variation picking ---
+	var ids: Array[StringName] = [&"a", &"b", &"c"]
+	failure_count += expect_true("empty ids -> fallback",
+		SfxTranslation.pick_variation_id([], &"fallback", 0.5) == &"fallback")
+	failure_count += expect_true("unit 0.0 -> first id",
+		SfxTranslation.pick_variation_id(ids, &"fallback", 0.0) == &"a")
+	failure_count += expect_true("unit near 1.0 -> last id",
+		SfxTranslation.pick_variation_id(ids, &"fallback", 0.999) == &"c")
+
+	# --- state sfx table ---
+	var state_lookup := SfxTranslation.build_state_sfx_lookup(SfxTranslation.build_default_state_sfx_table())
+	var hurt_sfx: StateSfxSet = SfxTranslation.resolve_state_sfx(state_lookup, &"state.hurt")
+	failure_count += expect_true("state.hurt row exists by default", Utility.is_object_valid(hurt_sfx))
+	failure_count += expect_true("default state sfx starts silent (opt-in)",
+		hurt_sfx.enter_audio_variation_ids.is_empty() and hurt_sfx.loop_audio_variation_ids.is_empty())
+	failure_count += expect_true("unmapped state -> null",
+		not Utility.is_object_valid(SfxTranslation.resolve_state_sfx(state_lookup, &"state.nonexistent")))
+
 	if failure_count > 0:
 		push_error("%d sfx-player test(s) failed." % failure_count)
 		quit(1)

@@ -6,6 +6,8 @@ up. **Living document — update it when reality changes.**
 - **Design**: [`ARCHITECTURE_SPEC.md`](ARCHITECTURE_SPEC.md)
 - **Task backlog + dated history**: [`REMAINING_TASKS.md`](REMAINING_TASKS.md)
 - **Asset ids a theme fills**: [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md)
+- **`ThemeProfile` fields, per-field example + visuals**: [`THEME_PROFILE_FIELDS.md`](THEME_PROFILE_FIELDS.md)
+- **What each demo should look like**: [`DEMO_SMOKE_TESTS.md`](DEMO_SMOKE_TESTS.md)
 - **Contributing / "add a subsystem" checklist**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Coding rules (authoritative, overrides everything)**: [`CLAUDE.md`](CLAUDE.md)
 - **Brisklance addon** (`addons/brisklance/`) has its *own* spec/tasks — a
@@ -17,11 +19,18 @@ up. **Living document — update it when reality changes.**
 
 - **Framework complete.** Foundation + all 7 subsystems + tooling, on `main`,
   pushed to `origin` (`github.com/brisketty/asap2d.brk`).
-- **12 headless test suites / 171 checks**, all green on Godot 4.7. 8 demo
+- **13 headless test suites**, all green on Godot 4.7. 8 demo
   scenes run headless with 0 script errors. `lint_conventions` clean.
   `run_asset_scan` + a per-subsystem runtime smoke each pass.
-- **8 asset kinds live**: sprite, audio, particle, shader, post_fx, music,
-  bus_profile, tileset.
+- **9 asset kinds live**: sprite, audio, particle, shader, post_fx, music,
+  bus_profile, tileset, screen_tile.
+- **2026-09-11 follow-up (Camera demo pass)**: `CameraRig.shake_intensity_scale`
+  tuning knob + bigger Crit default; optional `screen_tile` border overlay
+  (under/over the state grade, per `THEME_PROFILE_SLOTS.md`); `SfxRoute`
+  variation pools (`route_audio_variation_ids`) + a new opt-in
+  `SfxPlayer.state_sfx_table` (enter/loop/exit sounds for `state.*`). See
+  gotcha **R10** below for the new `CanvasLayer.layer` convention this
+  introduced.
 - `state.*` (`hurt`/`lowhealth`/`paused`/`clear`) feeds Camera (post-FX grade),
   MusicDirector (intensity floor) and AudioMixing (transient bus grade).
 - `exports/asset_worklist.md` lists `[tileset] world.tiles` — legitimately
@@ -47,16 +56,16 @@ up. **Living document — update it when reality changes.**
 | Tools | `scripts/{run_asset_scan,lint_conventions,tone_stream}.gd` | SceneTree scripts (run headless); ToneStream = procedural WAV for demos/tests |
 | Impact VFX (P1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | |
 | World & Env (P2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
-| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/camera_rig.{gd,tscn}` | owns the `Camera2D`; `set_followed(node)` |
+| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade |
 | HUD (P4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/hud_translation.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
 | SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients |
 | BGM (P6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
 | Mixing (P7) | `autoloads/audio_mixing.gd` (`AudioMixing`), `scripts/{audio_mixing_translation,bus_profile}.gd`, `default_bus_layout.tres` | `Master / Music / Ambience / SFX / UI`; SFX reverb added at runtime |
 | Shaders | `assets/shaders/{biome_tint,hurt_vignette}.gdshader` | |
-| Theme profiles | `assets/theme_profile_{complete,sparse,forest,cave}.tres` | |
-| Demos | `scenes/foundation_demo.tscn` (main scene), `scenes/demo_{impact_vfx,world,camera,hud,sfx,music,mixing}.tscn` | 8 total |
-| Tests | `tests/test_*.gd` (12), `tests/fixture_intensity.tres` | headless `SceneTree` scripts |
-| CI | `.github/workflows/test.yml` | import → lint → 12 suites → worklist-drift check, on every push/PR |
+| Theme profiles | `assets/theme_profile_{complete,sparse,forest,cave}.tres` — fields explained in [`THEME_PROFILE_FIELDS.md`](THEME_PROFILE_FIELDS.md) | |
+| Demos | `scenes/foundation_demo.tscn` (main scene), `scenes/demo_{impact_vfx,world,camera,hud,sfx,music,mixing}.tscn` | 8 total; per-demo click-through + expected result in [`DEMO_SMOKE_TESTS.md`](DEMO_SMOKE_TESTS.md) |
+| Tests | `tests/test_*.gd` (13), `tests/fixture_intensity.tres` | headless `SceneTree` scripts |
+| CI | `.github/workflows/test.yml` | import → lint → suites → worklist-drift check, on every push/PR |
 | Worklist | `exports/asset_worklist.md` | generated by `run_asset_scan`; git-tracked (`.gitignore` keeps just this file under `/exports`) |
 
 Autoload order in `project.godot`: `EventBus`, `ThemeManager`, then the 7
@@ -69,10 +78,11 @@ subsystems (each references the first two, so they must come after).
 ```bash
 GODOT="/d/Programs/Godot_v4.7/Godot_v4.7-stable_win64.exe"
 
-# the 12 headless test suites (each prints "All ... tests passed." + exits 0)
+# the 13 headless test suites (each prints "All ... tests passed." + exits 0)
 for t in test_utility test_event_bus test_theme_manager test_asset_id_scanner \
          test_node_pool test_impact_vfx test_world_environment test_camera_director \
-         test_hud_polish test_sfx_player test_music_director test_audio_mixing; do
+         test_hud_polish test_sfx_player test_music_director test_audio_mixing \
+         test_screen_tile; do
   "$GODOT" --headless --script res://tests/$t.gd
 done
 
@@ -164,6 +174,16 @@ failures. Grep them out.
   "Unterminated string", no line number). If you get an unexplained
   "Unterminated string": `file scripts/*.gd` (looks for `data` vs `ASCII text`),
   then `perl -0pi -e 's/\x00//g' <file>`.
+- **R10. `CanvasLayer.layer` was implicit everywhere (default `0`) until
+  `camera_rig.tscn`** — compositing among same-layer `CanvasLayer`s follows
+  scene-tree/autoload add order, which is how World's atmosphere overlay ends
+  up under Camera's state grade today (`WorldEnvironment2D` autoload registers
+  before `CameraDirector`). `CameraRig` now sets explicit layers so its 3
+  internal passes have a real order regardless of add-order: `TileUnder=5` <
+  `ScreenShaderOverlay=6` < `TileOver=7`, all above World's still-implicit `0`
+  so the existing "state grade over world atmosphere" behavior is preserved.
+  If you add another full-screen `CanvasLayer` pass anywhere, give it an
+  explicit `layer` rather than relying on add-order.
 
 ### H — Headless / CLI / tooling
 

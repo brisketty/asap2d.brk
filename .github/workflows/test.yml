@@ -32,6 +32,7 @@ jobs:
             test_utility test_event_bus test_theme_manager test_asset_id_scanner
             test_node_pool test_impact_vfx test_world_environment test_camera_director
             test_hud_polish test_sfx_player test_music_director test_audio_mixing
+            test_screen_tile
           )
           failed=0
           for suite in "${suites[@]}"; do

@@ -4,8 +4,15 @@ extends Resource
 ## Designer-tunable as a typed array on the SfxPlayer subsystem.
 
 @export var route_event_id: StringName = &"impact.basic"
-## Resolved through ThemeManager.resolve_audio at play time.
+## Resolved through ThemeManager.resolve_audio at play time. The fallback used
+## when `route_audio_variation_ids` is empty.
 @export var route_audio_asset_id: StringName = &"sfx.impact"
+## Optional pool of alternate audio ids; one is picked at random per play for
+## extra variety on top of the pitch/volume jitter below. Empty -> always
+## `route_audio_asset_id`. Not currently visible to `AssetIdScanner` (it only
+## scans single-id properties, not collections) - list these ids by hand until
+## that's extended.
+@export var route_audio_variation_ids: Array[StringName] = []
 ## true -> positional AudioStreamPlayer2D on the SFX bus; false -> dry
 ## AudioStreamPlayer on the UI bus.
 @export var route_spatialized: bool = true

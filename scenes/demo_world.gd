@@ -11,6 +11,21 @@ const TILE_SIZE := 64
 const FLOOR_ROW := 6
 const FLOOR_SPAN := 24
 
+## Radial-blob parallax textures, far -> near. Bigger + fainter reads as further
+## away; smaller + sharper reads as closer, so the scroll-scale split the
+## subsystem applies actually looks like depth.
+const PARALLAX_LAYER_SIZES: Array[Vector2i] = [
+	Vector2i(320, 320), Vector2i(224, 224), Vector2i(160, 160),
+]
+const PARALLAX_LAYER_ALPHAS: PackedFloat32Array = [0.35, 0.6, 0.95]
+
+## Per-biome layer tints, far -> near. Forest greens warming to a canopy
+## highlight; cave slate cooling to a pale glow.
+const PARALLAX_TINTS_BY_BIOME := {
+	&"forest": [Color(0.20, 0.45, 0.22), Color(0.35, 0.60, 0.28), Color(0.78, 0.86, 0.34)],
+	&"cave": [Color(0.16, 0.20, 0.32), Color(0.28, 0.34, 0.48), Color(0.58, 0.70, 0.88)],
+}
+
 @export_group("Profiles", "profile_")
 @export var profile_available: Array[ThemeProfile] = []
 
@@ -20,6 +35,7 @@ const FLOOR_SPAN := 24
 @export var node_forest_button: BaseButton
 @export var node_cave_button: BaseButton
 @export var node_exit_button: BaseButton
+@export var node_status_label: Label
 
 
 static func get_packed_scene() -> PackedScene:
@@ -28,10 +44,14 @@ static func get_packed_scene() -> PackedScene:
 
 func _ready() -> void:
 	inject_demo_tilesets()
+	inject_demo_parallax()
 	ThemeManager.profile_available = profile_available
 	node_forest_button.pressed.connect(handle_node_forest_button_pressed)
 	node_cave_button.pressed.connect(handle_node_cave_button_pressed)
 	node_exit_button.pressed.connect(handle_node_exit_button_pressed)
+	# Start inside a biome so the parallax rig, tint overlay and floor exist
+	# before any button press - the subsystem only builds them on biome.entered.
+	enter_biome(&"forest")
 
 
 ## The framework has no shipped tiles; give each biome profile a code-built
@@ -59,6 +79,46 @@ func build_tileset(p_tile_coords: Vector2i) -> TileSet:
 	return tileset
 
 
+## The framework ships no parallax art, so every `world.parallax.*` id resolves
+## to `res://icon.svg` and all three layers look identical. Give each biome
+## profile distinct radial-blob textures per layer so depth and biome swaps read.
+func inject_demo_parallax() -> void:
+	var layer_ids := WorldEnvironment2DSubsystem.PARALLAX_LAYER_IDS
+	for profile: ThemeProfile in profile_available:
+		if not Utility.is_object_valid(profile):
+			continue
+		var tints: Array = PARALLAX_TINTS_BY_BIOME.get(
+			profile.profile_id, PARALLAX_TINTS_BY_BIOME[&"forest"]
+		)
+		var sprites := profile.sprite_assets
+		for index: int in layer_ids.size():
+			var tint: Color = tints[index]
+			sprites[StringName(layer_ids[index])] = build_parallax_texture(
+				tint, PARALLAX_LAYER_SIZES[index], PARALLAX_LAYER_ALPHAS[index]
+			)
+		profile.sprite_assets = sprites
+
+
+func build_parallax_texture(p_tint: Color, p_size: Vector2i, p_center_alpha: float) -> Texture2D:
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(p_tint.r, p_tint.g, p_tint.b, p_center_alpha))
+	gradient.set_color(1, Color(p_tint.r, p_tint.g, p_tint.b, 0.0))
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = p_size.x
+	texture.height = p_size.y
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(0.5, 1.0)
+	return texture
+
+
+func refresh_status(p_biome_id: StringName) -> void:
+	if not Utility.is_object_valid(node_status_label):
+		return
+	node_status_label.text = "Biome: %s" % (String(p_biome_id) if p_biome_id != &"" else "(none)")
+
+
 func paint_floor() -> void:
 	if not Utility.is_object_valid(node_tilemap_layer.tile_set):
 		return
@@ -77,6 +137,7 @@ func enter_biome(p_biome_id: StringName) -> void:
 		Utility.make_spatial_context(Vector2.ZERO, Vector2.ZERO, 0.0, p_biome_id),
 	)
 	repaint_floor_for_active_tileset()
+	refresh_status(p_biome_id)
 
 
 func repaint_floor_for_active_tileset() -> void:
@@ -94,3 +155,5 @@ func handle_node_cave_button_pressed() -> void:
 
 func handle_node_exit_button_pressed() -> void:
 	EventBus.emit_semantic_event(EventIds.BIOME_EXITED, {})
+	node_tilemap_layer.clear()
+	refresh_status(&"")

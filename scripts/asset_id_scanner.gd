@@ -17,6 +17,7 @@ const POST_FX_ID_SUFFIX := "_post_fx_asset_id"
 const MUSIC_ID_SUFFIX := "_music_asset_id"
 const BUS_PROFILE_ID_SUFFIX := "_bus_profile_asset_id"
 const TILESET_ID_SUFFIX := "_tileset_asset_id"
+const SCREEN_TILE_ID_SUFFIX := "_screen_tile_asset_id"
 const EVENT_ID_SUFFIX := "_event_id"
 const SCENE_EXTENSION := ".tscn"
 const RESOURCE_EXTENSIONS: PackedStringArray = [".tres", ".res"]
@@ -29,6 +30,7 @@ const POST_FX_KIND := &"post_fx"
 const MUSIC_KIND := &"music"
 const BUS_PROFILE_KIND := &"bus_profile"
 const TILESET_KIND := &"tileset"
+const SCREEN_TILE_KIND := &"screen_tile"
 const EVENT_KIND := &"event"
 
 
@@ -185,6 +187,8 @@ static func classify_property(p_property_name: String) -> StringName:
 		return SPRITE_KIND
 	if p_property_name.ends_with(BUS_PROFILE_ID_SUFFIX):
 		return BUS_PROFILE_KIND
+	if p_property_name.ends_with(SCREEN_TILE_ID_SUFFIX):
+		return SCREEN_TILE_KIND
 	if p_property_name.ends_with(TILESET_ID_SUFFIX):
 		return TILESET_KIND
 	if p_property_name.ends_with(MUSIC_ID_SUFFIX):
@@ -258,6 +262,8 @@ static func is_reference_mapped(p_kind: StringName, p_asset_id: StringName, p_th
 		return p_theme_manager.has_bus_profile(p_asset_id)
 	if p_kind == TILESET_KIND:
 		return p_theme_manager.has_tileset(p_asset_id)
+	if p_kind == SCREEN_TILE_KIND:
+		return p_theme_manager.has_screen_tile(p_asset_id)
 	return false
 
 

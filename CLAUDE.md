@@ -6,19 +6,32 @@ Role: You are a Lead Godot Game Developer assisting with GDScript generation, re
 
 Organize files exclusively within these designated directories:
 
-- `/external` - Non-Godot external project files.
+- `/external` - Non-Godot external project / source files: the editable
+  originals that `/assets` are exported from. Krita (`.kra`), Aseprite
+  (`.aseprite`), Inkscape (`.svg` working files), audio DAW sessions
+  (Audacity, LMMS, Reaper), Blender (`.blend`), etc. Godot never imports from
+  here - mirror the layout of `/assets` where practical (e.g.
+  `/external/forest/trees.kra` → `/assets/forest/trees.png`).
 - `/exports` - Exported Godot distributable builds.
 - `/scripts` - Standalone utility GDScripts (do not extend `Node`).
 - `/autoloads` - Global Godot Autoload singletons.
 - `/tests` - Unit/integration tests and local dependencies.
 - `/scenes` - Root level scenes used directly in the main game loop.
-- `/assets` - Raw graphic and audio assets.
+- `/assets` - Raw graphic and audio assets Godot imports (final PNG/OGG/WAV/etc.),
+  plus any exported imagery referenced by the root documentation (keep it under
+  `/assets/docs/`).
 - `/prefabs` - Reusable sub-scenes used across main scenes.
 
-Crucial project files:
+Crucial project files (reference docs live at the repo root):
 
-- `/CONTRIBUTING.md` - Contributing guidelines.
-- `/README.md` - Game mechanics and design documentation.
+- `/CONTRIBUTING.md` - Contributing guidelines / "add a subsystem" checklist.
+- `/README.md` - Framework overview, four pillars, subsystem list.
+- `/STATE.md` - Orientation, gotchas and open work for agents - **read first**.
+- `/ARCHITECTURE_SPEC.md` - Full framework design (four pillars, all subsystems).
+- `/REMAINING_TASKS.md` - Phased backlog + dated history.
+- `/THEME_PROFILE_SLOTS.md` - Every abstract asset id a `ThemeProfile` fills.
+- `/THEME_PROFILE_FIELDS.md` - `ThemeProfile` field-by-field reference + sample visuals.
+- `/DEMO_SMOKE_TESTS.md` - Manual click-through + expected result for each demo scene.
 - `/addons/brisklance/manager/ARCHITECTURE_SPEC.md` - Brisklance manager self-update design.
 - `/addons/brisklance/manager/REMAINING_TASKS.md` - Brisklance manager self-update status and history.
 

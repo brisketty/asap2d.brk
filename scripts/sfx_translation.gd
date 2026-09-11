@@ -23,6 +23,10 @@ static func build_default_route_table() -> Array[SfxRoute]:
 		make_route(EventIds.UI_HOVER, &"sfx.ui.hover", false, 0.5, 1.5),
 		make_route(EventIds.UI_CONFIRM, &"sfx.ui.confirm", false, 0.0, 1.0),
 		make_route(EventIds.UI_CANCEL, &"sfx.ui.cancel", false, 0.0, 1.0),
+		# camera.* - momentary effects, same treatment as an impact (no
+		# enter/during/exit lifecycle; see StateSfxSet for that).
+		make_route(EventIds.CAMERA_SHAKE, &"sfx.camera.shake", false, 1.5, 2.0),
+		make_route(EventIds.CAMERA_ZOOM, &"sfx.camera.zoom", false, 1.0, 1.5),
 	]
 
 
@@ -32,6 +36,7 @@ static func make_route(
 	p_spatialized: bool,
 	p_pitch_semitones: float,
 	p_volume_db_range: float,
+	p_variation_ids: Array[StringName] = [],
 ) -> SfxRoute:
 	var route := SfxRoute.new()
 	route.route_event_id = p_event_id
@@ -39,11 +44,54 @@ static func make_route(
 	route.route_spatialized = p_spatialized
 	route.route_pitch_semitones = p_pitch_semitones
 	route.route_volume_db_range = p_volume_db_range
+	route.route_audio_variation_ids = p_variation_ids
 	return route
 
 
 static func resolve_route(p_lookup: Dictionary, p_event_id: StringName) -> SfxRoute:
 	return p_lookup.get(p_event_id)
+
+
+# --- state enter/loop/exit sfx table ---
+
+static func build_state_sfx_lookup(p_table: Array[StateSfxSet]) -> Dictionary:
+	var lookup: Dictionary = {}
+	for entry: StateSfxSet in p_table:
+		if not Utility.is_object_valid(entry):
+			continue
+		lookup[entry.state_event_id] = entry
+	return lookup
+
+
+## Declares the 3 state ids the framework already drives (Camera/AudioMixing/
+## MusicDirector); every stage starts empty (silent) - sound design is too
+## game-specific to default, this just gives the Inspector a ready skeleton.
+static func build_default_state_sfx_table() -> Array[StateSfxSet]:
+	return [
+		make_state_sfx(EventIds.STATE_HURT),
+		make_state_sfx(EventIds.STATE_LOWHEALTH),
+		make_state_sfx(EventIds.STATE_PAUSED),
+	]
+
+
+static func make_state_sfx(p_state_event_id: StringName) -> StateSfxSet:
+	var entry := StateSfxSet.new()
+	entry.state_event_id = p_state_event_id
+	return entry
+
+
+static func resolve_state_sfx(p_lookup: Dictionary, p_event_id: StringName) -> StateSfxSet:
+	return p_lookup.get(p_event_id)
+
+
+## `p_unit` is a random draw in 0..1 (distinct from the +/-1 convention above -
+## this picks an index, it doesn't offset a value). `p_fallback_id` is returned
+## when `p_ids` is empty.
+static func pick_variation_id(p_ids: Array[StringName], p_fallback_id: StringName, p_unit: float) -> StringName:
+	if p_ids.is_empty():
+		return p_fallback_id
+	var index := clampi(int(floor(clampf(p_unit, 0.0, 0.999999) * p_ids.size())), 0, p_ids.size() - 1)
+	return p_ids[index]
 
 
 ## `p_unit` is a random value in -1..1. Returns a `pitch_scale` multiplier: at

@@ -10,10 +10,15 @@ extends Node2D
 @export var shake_max_offset: Vector2 = Vector2(24.0, 16.0)
 @export var shake_max_roll: float = 0.06
 @export var shake_noise_speed: float = 34.0
+## Multiplies the final shake offset/rotation. One knob to make every shake
+## punchier or softer without retuning `CameraDirector.trauma_table`.
+@export var shake_intensity_scale: float = 1.0
 
 @export_group("Nodes", "node_")
 @export var node_camera: Camera2D
 @export var node_post_fx: ScreenShaderOverlay
+@export var node_tile_under: ScreenTileBorder
+@export var node_tile_over: ScreenTileBorder
 
 var followed: Node2D
 var trauma: float = 0.0
@@ -51,8 +56,12 @@ func apply_shake(p_delta: float) -> void:
 	var noise_x := noise.get_noise_2d(noise_time, 0.0)
 	var noise_y := noise.get_noise_2d(0.0, noise_time)
 	var noise_r := noise.get_noise_2d(noise_time, noise_time)
-	node_camera.offset = CameraTranslation.compute_offset(trauma, shake_max_offset, noise_x, noise_y)
-	node_camera.rotation = CameraTranslation.compute_rotation(trauma, shake_max_roll, noise_r)
+	node_camera.offset = CameraTranslation.compute_offset(
+		trauma, shake_max_offset, noise_x, noise_y, shake_intensity_scale
+	)
+	node_camera.rotation = CameraTranslation.compute_rotation(
+		trauma, shake_max_roll, noise_r, shake_intensity_scale
+	)
 
 
 func add_trauma(p_amount: float) -> void:
@@ -91,3 +100,12 @@ func clear_focus() -> void:
 func set_post_fx(p_material: ShaderMaterial, p_seconds: float) -> void:
 	if Utility.is_object_valid(node_post_fx):
 		node_post_fx.fade_to(p_material, p_seconds)
+
+
+## Optional tiled border art either side of the shader grade. `null` clears a
+## layer (the defensive default - no tiles).
+func set_tile_border(p_under: ScreenTileSet, p_over: ScreenTileSet) -> void:
+	if Utility.is_object_valid(node_tile_under):
+		node_tile_under.configure(p_under)
+	if Utility.is_object_valid(node_tile_over):
+		node_tile_over.configure(p_over)

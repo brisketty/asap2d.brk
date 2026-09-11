@@ -58,6 +58,13 @@ extends Resource
 		tileset_assets = p_value
 		update_from_tileset_assets()
 
+## StringName -> ScreenTileSet. Optional tiled border decoration (drawn once
+## under and once over the state-grade shader) for `state.*` / `state.*.over`.
+@export var screen_tile_assets: Dictionary:
+	set(p_value):
+		screen_tile_assets = p_value
+		update_from_screen_tile_assets()
+
 @export var default_sprite: Texture2D
 @export var default_audio: AudioStream
 @export var default_particle: Resource
@@ -66,6 +73,7 @@ extends Resource
 @export var default_music: AudioStream
 @export var default_bus_profile: BusProfile
 @export var default_tileset: TileSet
+@export var default_screen_tile: ScreenTileSet
 
 
 func update_from_sprite_assets() -> void:
@@ -97,6 +105,10 @@ func update_from_bus_profile_assets() -> void:
 
 
 func update_from_tileset_assets() -> void:
+	pass # Hook for derived profiles that precompute lookup state.
+
+
+func update_from_screen_tile_assets() -> void:
 	pass # Hook for derived profiles that precompute lookup state.
 
 
@@ -148,6 +160,12 @@ func resolve_tileset_or_null(p_asset_id: StringName) -> TileSet:
 	return tileset_assets[p_asset_id] as TileSet
 
 
+func resolve_screen_tile_or_null(p_asset_id: StringName) -> ScreenTileSet:
+	if not screen_tile_assets.has(p_asset_id):
+		return null
+	return screen_tile_assets[p_asset_id] as ScreenTileSet
+
+
 func collect_sprite_ids() -> PackedStringArray:
 	return collect_ids_of(sprite_assets)
 
@@ -178,6 +196,10 @@ func collect_bus_profile_ids() -> PackedStringArray:
 
 func collect_tileset_ids() -> PackedStringArray:
 	return collect_ids_of(tileset_assets)
+
+
+func collect_screen_tile_ids() -> PackedStringArray:
+	return collect_ids_of(screen_tile_assets)
 
 
 func collect_ids_of(p_asset_dictionary: Dictionary) -> PackedStringArray:

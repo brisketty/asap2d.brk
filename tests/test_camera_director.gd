@@ -32,6 +32,13 @@ func _initialize() -> void:
 		is_equal_approx(CameraTranslation.compute_rotation(1.0, 0.1, 0.5), 0.05))
 	failure_count += expect_true("zero trauma -> zero rotation",
 		is_equal_approx(CameraTranslation.compute_rotation(0.0, 0.1, 1.0), 0.0))
+	failure_count += expect_true("default intensity scale is a no-op",
+		CameraTranslation.compute_offset(1.0, Vector2(10, 20), 0.5, -1.0)
+			== CameraTranslation.compute_offset(1.0, Vector2(10, 20), 0.5, -1.0, 1.0))
+	failure_count += expect_true("intensity scale multiplies offset",
+		CameraTranslation.compute_offset(1.0, Vector2(10, 20), 0.5, -1.0, 2.0) == Vector2(10, -40))
+	failure_count += expect_true("intensity scale multiplies rotation",
+		is_equal_approx(CameraTranslation.compute_rotation(1.0, 0.1, 0.5, 2.0), 0.1))
 
 	# --- event -> trauma table ---
 	var lookup := CameraTranslation.build_lookup(CameraTranslation.build_default_trauma_table())

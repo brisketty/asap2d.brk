@@ -76,6 +76,10 @@ on a timer and on click. `DemoImpactPresenter` translates it into a spark sprite
 via `ThemeManager`. The on-screen button swaps between `theme_profile_complete`
 and `theme_profile_sparse` to show the fallback ladder take over live.
 
+Each subsystem has its own demo scene under `scenes/`. A manual click-through of
+all 8 — controls and expected on-screen / audible result — is in
+[`DEMO_SMOKE_TESTS.md`](DEMO_SMOKE_TESTS.md).
+
 ## Tests
 
 Headless `SceneTree` scripts under `tests/`, one per foundation piece:
