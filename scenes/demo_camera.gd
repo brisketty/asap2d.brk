@@ -11,6 +11,12 @@ const PLAYER_SOURCE_ID := &"player"
 const TILE_UNDER_SIZE := Vector2i(72, 72)
 const TILE_OVER_SIZE := Vector2i(40, 40)
 
+const CHECKER_CELL_SIZE := Vector2i(64, 64)
+const CHECKER_COLOR_A := Color(0.22, 0.24, 0.28)
+const CHECKER_COLOR_B := Color(0.14, 0.15, 0.18)
+const CHECKER_BACKGROUND_SIZE := Vector2(2000.0, 2000.0)
+const CHECKER_Z_INDEX := -10
+
 const TONE_STATE_HURT_ENTER := &"sfx.state.hurt.enter"
 const TONE_STATE_HURT_LOOP := &"sfx.state.hurt.loop"
 const TONE_STATE_HURT_EXIT := &"sfx.state.hurt.exit"
@@ -38,6 +44,7 @@ static func get_packed_scene() -> PackedScene:
 
 
 func _ready() -> void:
+	inject_demo_background()
 	inject_demo_screen_tiles()
 	inject_demo_sounds()
 	ThemeManager.profile_available = profile_available
@@ -51,6 +58,33 @@ func _ready() -> void:
 	node_clear_button.pressed.connect(handle_node_clear_button_pressed)
 	node_zoom_in_button.pressed.connect(handle_node_zoom_in_button_pressed)
 	node_zoom_out_button.pressed.connect(handle_node_zoom_out_button_pressed)
+
+
+## The framework ships no ground art either, so paint a code-built checker
+## backdrop behind the player - a fixed world-space reference frame that makes
+## the camera's follow, shake and zoom behavior visible as the player wanders.
+func inject_demo_background() -> void:
+	var background := Sprite2D.new()
+	background.name = "Background"
+	background.texture = build_checker_texture(CHECKER_COLOR_A, CHECKER_COLOR_B, CHECKER_CELL_SIZE)
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	background.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	background.region_enabled = true
+	background.region_rect = Rect2(Vector2.ZERO, CHECKER_BACKGROUND_SIZE)
+	background.centered = true
+	background.position = node_player.position
+	background.z_index = CHECKER_Z_INDEX
+	add_child(background)
+	move_child(background, 0)
+
+
+func build_checker_texture(p_color_a: Color, p_color_b: Color, p_cell_size: Vector2i) -> ImageTexture:
+	var image := Image.create(p_cell_size.x * 2, p_cell_size.y * 2, false, Image.FORMAT_RGB8)
+	image.fill_rect(Rect2i(Vector2i.ZERO, p_cell_size), p_color_a)
+	image.fill_rect(Rect2i(Vector2i(p_cell_size.x, 0), p_cell_size), p_color_b)
+	image.fill_rect(Rect2i(Vector2i(0, p_cell_size.y), p_cell_size), p_color_b)
+	image.fill_rect(Rect2i(p_cell_size, p_cell_size), p_color_a)
+	return ImageTexture.create_from_image(image)
 
 
 ## The framework ships no border art, so give the Hurt state a code-built
