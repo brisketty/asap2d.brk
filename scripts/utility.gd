@@ -6,6 +6,8 @@ const CONTEXT_POSITION_KEY := &"position"
 const CONTEXT_DIRECTION_KEY := &"direction"
 const CONTEXT_MAGNITUDE_KEY := &"magnitude"
 const CONTEXT_SOURCE_ID_KEY := &"source_id"
+## World-space extents of a region of interest (e.g. `camera.focus` zoom-to-fit).
+const CONTEXT_SIZE_KEY := &"size"
 
 
 ## Objects can be freed or queued for deletion while remaining non-null, so a
@@ -35,5 +37,19 @@ static func make_spatial_context(
 		CONTEXT_POSITION_KEY: p_position,
 		CONTEXT_DIRECTION_KEY: p_direction,
 		CONTEXT_MAGNITUDE_KEY: p_magnitude,
+		CONTEXT_SOURCE_ID_KEY: p_source_id,
+	}
+
+
+## Context shape for a "frame this whole area" request (`camera.focus` with a
+## size, driving `CameraRig.focus_on_region`'s zoom-to-fit).
+static func make_region_context(
+	p_position: Vector2,
+	p_size: Vector2,
+	p_source_id: StringName = &"",
+) -> Dictionary:
+	return {
+		CONTEXT_POSITION_KEY: p_position,
+		CONTEXT_SIZE_KEY: p_size,
 		CONTEXT_SOURCE_ID_KEY: p_source_id,
 	}

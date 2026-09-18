@@ -56,7 +56,7 @@ up. **Living document — update it when reality changes.**
 | Tools | `scripts/{run_asset_scan,lint_conventions,tone_stream}.gd` | SceneTree scripts (run headless); ToneStream = procedural WAV for demos/tests |
 | Impact VFX (P1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | |
 | World & Env (P2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
-| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade |
+| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,camera_focus_region,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade; `CameraFocusRegion` = opt-in "region of interest" trigger (zoom-to-fit on enter) |
 | HUD (P4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/hud_translation.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
 | SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route,state_sfx_set}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients; `state_sfx_table` = opt-in enter/loop/exit sounds for `state.*` |
 | BGM (P6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
@@ -287,7 +287,6 @@ rough priority order. Full context + per-phase lists in `REMAINING_TASKS.md`.
   is wired).
 - [ ] Chromatic-aberration: a dedicated event/param (the grade shader exposes
   the uniform, nothing drives it).
-- [ ] `CameraRig.focus_on(rect)` (zoom-to-fit) — only `focus_on(position)` exists.
 - [ ] Voice stealing / priority in `SfxVoicePool` (at the ceiling `NodePool`
   recycles the oldest, which may cut an important sound).
 - [ ] `MusicDirector` sample-lock is best-effort (all stems `play()` in one
@@ -335,7 +334,9 @@ refactor · merge to `main` + push · `screen_tile` kind + `ScreenTileBorder` ·
 `CameraRig.shake_intensity_scale` + bigger Crit shake default ·
 `SfxRoute.route_audio_variation_ids` · `StateSfxSet` +
 `SfxPlayer.state_sfx_table` enter/loop/exit lifecycle · `DEMO_SMOKE_TESTS.md` ·
-`THEME_PROFILE_FIELDS.md`.
+`THEME_PROFILE_FIELDS.md` · `CameraRig.focus_on_region` (zoom-to-fit) +
+`CameraFocusRegion` region-of-interest trigger prefab · `demo_camera.tscn`
+checker backdrop.
 
 ---
 

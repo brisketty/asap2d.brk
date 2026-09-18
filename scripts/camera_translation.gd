@@ -74,3 +74,25 @@ static func make_trauma(p_event_id: StringName, p_amount: float) -> CameraTrauma
 ## Trauma amount for an event id, or 0.0 when the table has no row for it.
 static func resolve_trauma(p_lookup: Dictionary, p_event_id: StringName) -> float:
 	return p_lookup.get(p_event_id, 0.0)
+
+
+# --- region of interest (zoom-to-fit focus) ---
+
+## `true` when `p_point` falls inside the rectangle centered on
+## `p_region_center` sized `p_region_size` - the trigger check for
+## `CameraFocusRegion`, no physics bodies involved.
+static func is_point_in_region(p_point: Vector2, p_region_center: Vector2, p_region_size: Vector2) -> bool:
+	var rect := Rect2(p_region_center - p_region_size * 0.5, p_region_size)
+	return rect.has_point(p_point)
+
+
+## The uniform `Camera2D.zoom` value that frames `p_region_size` inside
+## `p_viewport_size` (Godot's zoom convention: values above 1 show *more*
+## world, i.e. zoom out). `p_margin` pads the fit so the region's edges aren't
+## flush with the screen edge. Never zooms in past 1.0 just because the region
+## is smaller than the viewport.
+static func compute_fit_zoom(p_viewport_size: Vector2, p_region_size: Vector2, p_margin: float = 1.1) -> float:
+	if p_viewport_size.x <= 0.0 or p_viewport_size.y <= 0.0:
+		return 1.0
+	var fit := maxf(p_region_size.x / p_viewport_size.x, p_region_size.y / p_viewport_size.y)
+	return maxf(fit * p_margin, 1.0)

@@ -93,8 +93,36 @@ func focus_on(p_global_position: Vector2, p_seconds: float) -> void:
 	focus_tween.tween_property(self, "global_position", p_global_position, p_seconds)
 
 
-func clear_focus() -> void:
+## Pan to `p_global_position` and zoom out just enough to fit `p_region_size`
+## (world-space) on screen - the "show the whole boss arena" focus. Owns both
+## the position and zoom tweens so it never fights `zoom_to`/`focus_on` (R4).
+func focus_on_region(p_global_position: Vector2, p_region_size: Vector2, p_seconds: float) -> void:
+	is_focused = true
+	if Utility.is_object_valid(focus_tween):
+		focus_tween.kill()
+	if Utility.is_object_valid(zoom_tween):
+		zoom_tween.kill()
+	focus_tween = create_tween()
+	focus_tween.set_parallel(true)
+	focus_tween.tween_property(self, "global_position", p_global_position, p_seconds)
+	if Utility.is_object_valid(node_camera):
+		var target_zoom := CameraTranslation.compute_fit_zoom(get_viewport_rect().size, p_region_size)
+		focus_tween.tween_property(node_camera, "zoom", Vector2(target_zoom, target_zoom), p_seconds)
+
+
+## Release back to following the registered target and tween the zoom back to
+## normal - the counterpart to `focus_on_region`. Position releases with a hard
+## snap next `_process` (same as the pre-existing point-focus release).
+func clear_focus(p_seconds: float) -> void:
 	is_focused = false
+	if Utility.is_object_valid(focus_tween):
+		focus_tween.kill()
+	if Utility.is_object_valid(zoom_tween):
+		zoom_tween.kill()
+	if not Utility.is_object_valid(node_camera):
+		return
+	zoom_tween = create_tween()
+	zoom_tween.tween_property(node_camera, "zoom", Vector2.ONE, p_seconds)
 
 
 func set_post_fx(p_material: ShaderMaterial, p_seconds: float) -> void:

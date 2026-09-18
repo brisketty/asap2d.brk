@@ -54,6 +54,22 @@ func _initialize() -> void:
 	failure_count += expect_true("custom row resolves",
 		is_equal_approx(CameraTranslation.resolve_trauma(custom_lookup, &"camera.custom"), 0.9))
 
+	# --- region of interest (zoom-to-fit focus) ---
+	failure_count += expect_true("point inside region",
+		CameraTranslation.is_point_in_region(Vector2(100, 100), Vector2(100, 100), Vector2(50, 50)))
+	failure_count += expect_true("point just inside the region edge counts as inside",
+		CameraTranslation.is_point_in_region(Vector2(124, 100), Vector2(100, 100), Vector2(50, 50)))
+	failure_count += expect_true("point outside region",
+		not CameraTranslation.is_point_in_region(Vector2(200, 100), Vector2(100, 100), Vector2(50, 50)))
+	failure_count += expect_true("fit zoom never goes below 1.0 for a region smaller than the viewport",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 600), Vector2(200, 100)), 1.0))
+	failure_count += expect_true("fit zoom scales by the wider axis' overflow, plus margin",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 600), 1.0), 2.0))
+	failure_count += expect_true("fit zoom margin pads the fit",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 600), 1.1), 2.2))
+	failure_count += expect_true("degenerate viewport falls back to 1.0",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2.ZERO, Vector2(200, 100)), 1.0))
+
 	if failure_count > 0:
 		push_error("%d camera-director test(s) failed." % failure_count)
 		quit(1)

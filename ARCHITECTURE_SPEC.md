@@ -103,6 +103,8 @@ Constants — the reserved `EventBus` context keys:
 - `CONTEXT_DIRECTION_KEY := &"direction"`
 - `CONTEXT_MAGNITUDE_KEY := &"magnitude"`
 - `CONTEXT_SOURCE_ID_KEY := &"source_id"`
+- `CONTEXT_SIZE_KEY := &"size"` — world-space extents of a region of interest
+  (currently only `camera.focus`'s zoom-to-fit).
 
 Methods:
 
@@ -112,6 +114,8 @@ Methods:
   is guarded by a `Node` cast).
 - `static make_spatial_context(p_position: Vector2, p_direction := Vector2.ZERO, p_magnitude := 0.0, p_source_id := &"") -> Dictionary` —
   the canonical context shape `{ position, direction, magnitude, source_id }`.
+- `static make_region_context(p_position: Vector2, p_size: Vector2, p_source_id := &"") -> Dictionary` —
+  `{ position, size, source_id }`, for a "frame this whole area" request.
 
 ### 2. `EventBus` — `autoloads/event_bus.gd`
 
@@ -458,8 +462,12 @@ Autoload `CameraDirector`, `class_name CameraDirectorSubsystem`
     → `camera_rig.add_trauma(amount)`.
   - `camera.shake` — `context.magnitude` added as trauma.
   - `camera.zoom` — `context.magnitude` = zoom factor, tweened.
-  - `camera.focus` — `context.position` present → pan there and hold
-    (`is_focused`); absent → release back to the followed target.
+  - `camera.focus` — `context.size` present → `camera_rig.focus_on_region`,
+    pan to `context.position` and zoom out just enough to fit the whole
+    `context.size` region on screen (`CameraTranslation.compute_fit_zoom`);
+    else `context.position` alone → pan there and hold at current zoom
+    (`is_focused`); absent both → release back to the followed target and
+    tween the zoom back to `1.0`.
   - `state.hurt`/`state.lowhealth`/`state.paused` →
     `camera_rig.set_post_fx(ThemeManager.resolve_post_fx(event_id), …)`;
     `state.clear` → fade the grade out.
@@ -472,6 +480,15 @@ Autoload `CameraDirector`, `class_name CameraDirectorSubsystem`
   `Camera2D` + `FastNoiseLite`-driven shake in `_process` + a zoom `Tween` +
   focus `Tween` + a child `ScreenShaderOverlay` for the state grade. Follows the
   registered node unless focused.
+- **`CameraFocusRegion`** (`prefabs/camera_focus_region.{gd,tscn}`,
+  `extends Node2D`) — an opt-in trigger placed anywhere in a scene to mark a
+  region of interest (e.g. a boss arena). Every `_process`, it checks
+  `node_watched.global_position` against the rectangle centered on itself
+  (`region_size`), via `CameraTranslation.is_point_in_region` — a plain
+  position check, no physics bodies/collision layers. On enter it emits
+  `camera.focus` with `Utility.make_region_context(...)`; on exit, `camera.focus`
+  with an empty context. `region_debug_draw` (default on) outlines the
+  rectangle and recolors it while the target is inside.
 - **`ScreenShaderOverlay`** gained `fade_to(material, seconds)` (alpha
   crossfade) alongside the instant `configure()`; both the Camera grade and the
   World overlay use it.

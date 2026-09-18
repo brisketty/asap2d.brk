@@ -91,13 +91,22 @@ Section shape: **Scene · Exercises · Controls · Expected · Notes**.
 ## 4. `demo_camera.tscn` — Camera & Post-Processing (`CameraDirector`)
 
 - **Exercises**: trauma shake, zoom tweens, state-driven post-FX grade, the
-  optional tiled screen-border overlay, and per-state / per-effect sound hooks.
-  A player marker auto-wanders in a circle and is registered as the camera
-  target.
+  optional tiled screen-border overlay, per-state / per-effect sound hooks, and
+  a region-of-interest zoom-to-fit focus. A player marker auto-wanders in a
+  circle over a checker backdrop and is registered as the camera target.
 - **Controls**: **Crit** / **Shake** / **Hurt** / **Clear** / **Zoom In** /
   **Zoom Out**.
 - **Expected**:
-  - The view follows the wandering marker.
+  - The view follows the wandering marker against the checker backdrop, making
+    the follow/shake/zoom motion easy to read.
+  - An orange/blue-bordered box (`BossRegion`, a `CameraFocusRegion`) sits
+    beside the marker's wander loop. When the marker wanders inside it, the
+    border turns orange and the camera tweens to pan + zoom out just enough to
+    frame the whole box; leaving it releases the camera back to following the
+    marker and tweens the zoom back to normal. No button drives this — it's a
+    plain position check against the marker every frame
+    (`CameraTranslation.is_point_in_region`), the same pattern a boss-arena
+    trigger would use.
   - Shake / Crit → trauma-based screen shake that decays, plus a one-shot tone
     (pitch varies a little each press). Crit should read as a **visibly bigger**
     shake than a bare Shake press — both scale by `CameraRig.shake_intensity_scale`
