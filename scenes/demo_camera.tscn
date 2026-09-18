@@ -1,9 +1,12 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/demo_camera.gd" id="1"]
 [ext_resource type="Texture2D" path="res://icon.svg" id="2"]
 [ext_resource type="Resource" path="res://assets/theme_profile_complete.tres" id="3"]
 [ext_resource type="PackedScene" path="res://prefabs/camera_focus_region.tscn" id="4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_boss"]
+size = Vector2(220, 220)
 
 [node name="CameraDemo" type="Node2D" node_paths=PackedStringArray("node_player", "node_crit_button", "node_shake_button", "node_hurt_button", "node_clear_button", "node_zoom_in_button", "node_zoom_out_button")]
 script = ExtResource("1")
@@ -22,8 +25,10 @@ texture = ExtResource("2")
 
 [node name="BossRegion" parent="." instance=ExtResource("4") node_paths=PackedStringArray("node_watched")]
 position = Vector2(700, 300)
-region_size = Vector2(220, 220)
 node_watched = NodePath("../Player")
+
+[node name="Shape" parent="BossRegion/Region" index="0"]
+shape = SubResource("RectangleShape2D_boss")
 
 [node name="Ui" type="CanvasLayer" parent="."]
 

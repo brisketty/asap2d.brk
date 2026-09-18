@@ -112,10 +112,11 @@ Section shape: **Scene · Exercises · Controls · Expected · Notes**.
     shake than a bare Shake press — both scale by `CameraRig.shake_intensity_scale`
     (default `1.0`; raise it in the Inspector for an even punchier feel).
   - Hurt → a red vignette grade **and** a tiled red border (two colour
-    variations, one layer under the vignette, one over it) that stay until
-    **Clear**; an enter blip plays once, then a low sustained tone loops for as
-    long as Hurt is active.
-  - Clear → the vignette, border and loop all stop together; an exit blip plays.
+    variations, one layer under the vignette, one over it) both **fade in**
+    together and stay until **Clear**; an enter blip plays once, then a low
+    sustained tone loops for as long as Hurt is active.
+  - Clear → the vignette, border and loop all **fade out** together; an exit
+    blip plays.
   - Zoom In / Zoom Out → the camera zoom tweens to the new level, each with its
     own one-shot tone (no sustained "zooming" sound — the tween is sub-second,
     so an enter/exit lifecycle isn't worth it here, unlike Hurt).

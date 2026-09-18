@@ -482,13 +482,17 @@ Autoload `CameraDirector`, `class_name CameraDirectorSubsystem`
   registered node unless focused.
 - **`CameraFocusRegion`** (`prefabs/camera_focus_region.{gd,tscn}`,
   `extends Node2D`) — an opt-in trigger placed anywhere in a scene to mark a
-  region of interest (e.g. a boss arena). Every `_process`, it checks
-  `node_watched.global_position` against the rectangle centered on itself
-  (`region_size`), via `CameraTranslation.is_point_in_region` — a plain
-  position check, no physics bodies/collision layers. On enter it emits
-  `camera.focus` with `Utility.make_region_context(...)`; on exit, `camera.focus`
-  with an empty context. `region_debug_draw` (default on) outlines the
-  rectangle and recolors it while the target is inside.
+  region of interest (e.g. a boss arena). Its extent is authored visually: a
+  child non-monitoring `Area2D`/`CollisionShape2D` (`Region`/`Shape`) holding a
+  `RectangleShape2D` gets Godot's built-in rectangle gizmo (drag handles in the
+  2D viewport) purely for editing — `node_shape` reads its `size` (times the
+  shape node's own `scale`) back as `get_region_size()`; no physics query ever
+  runs. Every `_process`, it checks `node_watched.global_position` against the
+  rectangle centered on itself via `CameraTranslation.is_point_in_region` — a
+  plain position check. On enter it emits `camera.focus` with
+  `Utility.make_region_context(...)`; on exit, `camera.focus` with an empty
+  context. `region_debug_draw` (default on) outlines the rectangle at runtime
+  and recolors it while the target is inside.
 - **`ScreenShaderOverlay`** gained `fade_to(material, seconds)` (alpha
   crossfade) alongside the instant `configure()`; both the Camera grade and the
   World overlay use it.

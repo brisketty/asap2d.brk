@@ -60,13 +60,14 @@ func handle_semantic_event_emitted(p_event_id: StringName, p_context: Dictionary
 		EventIds.STATE_CLEAR:
 			active_state_id = &""
 			camera_rig.set_post_fx(null, POST_FX_FADE_SECONDS)
-			camera_rig.set_tile_border(null, null)
+			camera_rig.set_tile_border(null, null, POST_FX_FADE_SECONDS)
 		EventIds.STATE_HURT, EventIds.STATE_LOWHEALTH, EventIds.STATE_PAUSED:
 			active_state_id = p_event_id
 			camera_rig.set_post_fx(ThemeManager.resolve_post_fx(p_event_id), POST_FX_FADE_SECONDS)
 			camera_rig.set_tile_border(
 				ThemeManager.resolve_screen_tile(p_event_id),
 				ThemeManager.resolve_screen_tile(StringName(String(p_event_id) + ".over")),
+				POST_FX_FADE_SECONDS,
 			)
 
 

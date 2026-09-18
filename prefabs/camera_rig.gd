@@ -130,10 +130,11 @@ func set_post_fx(p_material: ShaderMaterial, p_seconds: float) -> void:
 		node_post_fx.fade_to(p_material, p_seconds)
 
 
-## Optional tiled border art either side of the shader grade. `null` clears a
-## layer (the defensive default - no tiles).
-func set_tile_border(p_under: ScreenTileSet, p_over: ScreenTileSet) -> void:
+## Optional tiled border art either side of the shader grade, alpha-crossfaded
+## in/out over `p_seconds`. `null` clears a layer (the defensive default - no
+## tiles).
+func set_tile_border(p_under: ScreenTileSet, p_over: ScreenTileSet, p_seconds: float) -> void:
 	if Utility.is_object_valid(node_tile_under):
-		node_tile_under.configure(p_under)
+		node_tile_under.fade_to(p_under, p_seconds)
 	if Utility.is_object_valid(node_tile_over):
-		node_tile_over.configure(p_over)
+		node_tile_over.fade_to(p_over, p_seconds)

@@ -1,6 +1,17 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://prefabs/camera_focus_region.gd" id="1"]
 
-[node name="CameraFocusRegion" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(640, 360)
+
+[node name="CameraFocusRegion" type="Node2D" node_paths=PackedStringArray("node_shape")]
 script = ExtResource("1")
+node_shape = NodePath("Region/Shape")
+
+[node name="Region" type="Area2D" parent="."]
+monitoring = false
+monitorable = false
+
+[node name="Shape" type="CollisionShape2D" parent="Region"]
+shape = SubResource("RectangleShape2D_1")
