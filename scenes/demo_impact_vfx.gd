@@ -30,6 +30,7 @@ func _ready() -> void:
 	node_heavy_button.pressed.connect(handle_node_heavy_button_pressed)
 	node_crit_button.pressed.connect(handle_node_crit_button_pressed)
 	node_knockback_button.pressed.connect(handle_node_knockback_button_pressed)
+	CameraDirector.set_followed(node_target)
 
 
 func emit_impact(p_event_id: StringName, p_magnitude: float) -> void:
