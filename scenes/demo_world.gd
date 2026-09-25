@@ -11,6 +11,16 @@ const TILE_SIZE := 64
 const FLOOR_ROW := 6
 const FLOOR_SPAN := 24
 
+## The framework ships no ground art; a floor row of the same repeated sprite
+## reads as static rather than scrolling. A 2-tile checker (same idea as
+## demo_camera.gd's checker background) makes the camera's pan actually read
+## as motion instead.
+const CHECKER_TILE_COORDS: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0)]
+const FLOOR_CHECKER_COLORS_BY_BIOME := {
+	&"forest": [Color(0.30, 0.55, 0.28), Color(0.22, 0.42, 0.20)],
+	&"cave": [Color(0.34, 0.38, 0.46), Color(0.24, 0.27, 0.34)],
+}
+
 ## Radial-blob parallax textures, far -> near. Bigger + fainter reads as further
 ## away; smaller + sharper reads as closer, so the scroll-scale split the
 ## subsystem applies actually looks like depth.
@@ -30,7 +40,9 @@ const PARALLAX_TINTS_BY_BIOME := {
 @export var profile_available: Array[ThemeProfile] = []
 
 @export_group("Nodes", "node_")
-@export var node_camera: Camera2D
+## CameraDirector owns the actual Camera2D; this is just what it follows,
+## so panning this node is what makes the parallax rig actually scroll.
+@export var node_pan_target: Node2D
 @export var node_tilemap_layer: TileMapLayer
 @export var node_forest_button: BaseButton
 @export var node_cave_button: BaseButton
@@ -46,6 +58,7 @@ func _ready() -> void:
 	inject_demo_tilesets()
 	inject_demo_parallax()
 	ThemeManager.profile_available = profile_available
+	CameraDirector.set_followed(node_pan_target)
 	node_forest_button.pressed.connect(handle_node_forest_button_pressed)
 	node_cave_button.pressed.connect(handle_node_cave_button_pressed)
 	node_exit_button.pressed.connect(handle_node_exit_button_pressed)
@@ -55,28 +68,38 @@ func _ready() -> void:
 
 
 ## The framework has no shipped tiles; give each biome profile a code-built
-## TileSet keyed by `world.tiles` so the AnimatedTileDriver has something to swap.
+## checker TileSet keyed by `world.tiles` so the AnimatedTileDriver has
+## something to swap and the floor scrolling actually reads as motion.
 func inject_demo_tilesets() -> void:
-	var atlas_by_profile := {&"forest": Vector2i(0, 0), &"cave": Vector2i(1, 1)}
 	for profile: ThemeProfile in profile_available:
 		if not Utility.is_object_valid(profile):
 			continue
-		var atlas_coords: Vector2i = atlas_by_profile.get(profile.profile_id, Vector2i.ZERO)
+		var colors: Array = FLOOR_CHECKER_COLORS_BY_BIOME.get(
+			profile.profile_id, FLOOR_CHECKER_COLORS_BY_BIOME[&"forest"]
+		)
 		var tilesets := profile.tileset_assets
-		tilesets[&"world.tiles"] = build_tileset(atlas_coords)
+		tilesets[&"world.tiles"] = build_checker_tileset(colors[0], colors[1])
 		profile.tileset_assets = tilesets
 
 
-func build_tileset(p_tile_coords: Vector2i) -> TileSet:
+func build_checker_tileset(p_color_a: Color, p_color_b: Color) -> TileSet:
 	var tileset := TileSet.new()
 	tileset.tile_size = Vector2i(TILE_SIZE, TILE_SIZE)
 	var source := TileSetAtlasSource.new()
-	source.texture = load("res://icon.svg")
+	source.texture = build_checker_tile_texture(p_color_a, p_color_b)
 	source.texture_region_size = Vector2i(TILE_SIZE, TILE_SIZE)
-	source.create_tile(p_tile_coords)
+	for coords: Vector2i in CHECKER_TILE_COORDS:
+		source.create_tile(coords)
 	tileset.add_source(source, 0)
-	tileset.set_meta(&"demo_tile_coords", p_tile_coords)
 	return tileset
+
+
+func build_checker_tile_texture(p_color_a: Color, p_color_b: Color) -> ImageTexture:
+	var image := Image.create(TILE_SIZE * CHECKER_TILE_COORDS.size(), TILE_SIZE, false, Image.FORMAT_RGB8)
+	for index: int in CHECKER_TILE_COORDS.size():
+		var color := p_color_a if index % 2 == 0 else p_color_b
+		image.fill_rect(Rect2i(Vector2i(TILE_SIZE * index, 0), Vector2i(TILE_SIZE, TILE_SIZE)), color)
+	return ImageTexture.create_from_image(image)
 
 
 ## The framework ships no parallax art, so every `world.parallax.*` id resolves
@@ -122,13 +145,13 @@ func refresh_status(p_biome_id: StringName) -> void:
 func paint_floor() -> void:
 	if not Utility.is_object_valid(node_tilemap_layer.tile_set):
 		return
-	var coords: Vector2i = node_tilemap_layer.tile_set.get_meta(&"demo_tile_coords", Vector2i.ZERO)
 	for x: int in FLOOR_SPAN:
+		var coords: Vector2i = CHECKER_TILE_COORDS[x % CHECKER_TILE_COORDS.size()]
 		node_tilemap_layer.set_cell(Vector2i(x - FLOOR_SPAN / 2, FLOOR_ROW), 0, coords)
 
 
 func _process(p_delta: float) -> void:
-	node_camera.position.x += CAMERA_PAN_SPEED * p_delta
+	node_pan_target.position.x += CAMERA_PAN_SPEED * p_delta
 
 
 func enter_biome(p_biome_id: StringName) -> void:
