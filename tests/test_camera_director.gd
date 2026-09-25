@@ -61,14 +61,28 @@ func _initialize() -> void:
 		CameraTranslation.is_point_in_region(Vector2(124, 100), Vector2(100, 100), Vector2(50, 50)))
 	failure_count += expect_true("point outside region",
 		not CameraTranslation.is_point_in_region(Vector2(200, 100), Vector2(100, 100), Vector2(50, 50)))
-	failure_count += expect_true("fit zoom never goes below 1.0 for a region smaller than the viewport",
+	failure_count += expect_true("centered mode never zooms in past 1.0 for a region smaller than the viewport",
 		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 600), Vector2(200, 100)), 1.0))
-	failure_count += expect_true("fit zoom scales by the wider axis' overflow, plus margin",
-		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 600), 1.0), 2.0))
-	failure_count += expect_true("fit zoom margin pads the fit",
-		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 600), 1.1), 2.2))
+	failure_count += expect_true("centered mode zooms out by the wider axis' overflow, plus margin",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 600), 1.0), 0.5))
+	failure_count += expect_true("centered mode margin pads the fit (zooms out further)",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 600), 1.1), 0.5 / 1.1))
 	failure_count += expect_true("degenerate viewport falls back to 1.0",
 		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2.ZERO, Vector2(200, 100)), 1.0))
+	failure_count += expect_true("degenerate region falls back to 1.0",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(Vector2(1000, 600), Vector2.ZERO), 1.0))
+	failure_count += expect_true("covered mode zooms out by the narrower axis' overflow",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(
+			Vector2(1000, 500), Vector2(2000, 600), 1.0, CameraTranslation.FocusFitMode.COVERED), 500.0 / 600.0))
+	failure_count += expect_true("covered mode margin tightens the fit (zooms in further)",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(
+			Vector2(1000, 500), Vector2(2000, 600), 1.1, CameraTranslation.FocusFitMode.COVERED), 500.0 / 600.0 * 1.1))
+	failure_count += expect_true("covered mode zooms in past 1.0 for a region smaller than the viewport",
+		is_equal_approx(CameraTranslation.compute_fit_zoom(
+			Vector2(1000, 600), Vector2(200, 120), 1.0, CameraTranslation.FocusFitMode.COVERED), 5.0))
+	failure_count += expect_true("covered zooms in further than centered for the same non-square mismatch",
+		CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 300), 1.0, CameraTranslation.FocusFitMode.COVERED)
+		> CameraTranslation.compute_fit_zoom(Vector2(1000, 500), Vector2(2000, 300), 1.0, CameraTranslation.FocusFitMode.CENTERED))
 
 	if failure_count > 0:
 		push_error("%d camera-director test(s) failed." % failure_count)

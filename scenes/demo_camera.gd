@@ -28,12 +28,14 @@ const TONE_CAMERA_ZOOM := &"sfx.camera.zoom"
 
 @export_group("Nodes", "node_")
 @export var node_player: Node2D
+@export var node_boss_region: CameraFocusRegion
 @export var node_crit_button: BaseButton
 @export var node_shake_button: BaseButton
 @export var node_hurt_button: BaseButton
 @export var node_clear_button: BaseButton
 @export var node_zoom_in_button: BaseButton
 @export var node_zoom_out_button: BaseButton
+@export var node_fit_mode_button: BaseButton
 
 var wander_time: float = 0.0
 var player_origin: Vector2
@@ -58,6 +60,8 @@ func _ready() -> void:
 	node_clear_button.pressed.connect(handle_node_clear_button_pressed)
 	node_zoom_in_button.pressed.connect(handle_node_zoom_in_button_pressed)
 	node_zoom_out_button.pressed.connect(handle_node_zoom_out_button_pressed)
+	node_fit_mode_button.pressed.connect(handle_node_fit_mode_button_pressed)
+	update_fit_mode_button_text()
 
 
 ## The framework ships no ground art either, so paint a code-built checker
@@ -185,3 +189,26 @@ func handle_node_zoom_in_button_pressed() -> void:
 
 func handle_node_zoom_out_button_pressed() -> void:
 	EventBus.emit_semantic_event(EventIds.CAMERA_ZOOM, Utility.make_spatial_context(Vector2.ZERO, Vector2.ZERO, 1.0))
+
+
+## Toggles BossRegion's zoom-to-fit trade-off: CENTERED always shows the whole
+## region (may reveal area outside it); COVERED never shows outside the
+## region (may crop part of it). Takes effect next time the marker enters.
+func handle_node_fit_mode_button_pressed() -> void:
+	if not Utility.is_object_valid(node_boss_region):
+		return
+	node_boss_region.region_fit_mode = (
+		CameraTranslation.FocusFitMode.COVERED
+		if node_boss_region.region_fit_mode == CameraTranslation.FocusFitMode.CENTERED
+		else CameraTranslation.FocusFitMode.CENTERED
+	)
+	update_fit_mode_button_text()
+
+
+func update_fit_mode_button_text() -> void:
+	if not Utility.is_object_valid(node_fit_mode_button) or not Utility.is_object_valid(node_boss_region):
+		return
+	var mode_name := (
+		"CENTERED" if node_boss_region.region_fit_mode == CameraTranslation.FocusFitMode.CENTERED else "COVERED"
+	)
+	node_fit_mode_button.text = "focus fit: %s" % mode_name

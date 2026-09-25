@@ -1,29 +1,31 @@
 class_name CameraFocusRegion
-extends Node2D
+extends Control
 ## Marks a region of interest in a scene - e.g. a boss arena. When
-## `node_watched` (usually the followed player) enters the rectangle read from
-## `node_shape` (a `RectangleShape2D`, centered on this node), it emits
-## `camera.focus` with a region context so `CameraDirector` tweens the camera
-## to frame the whole area; leaving the rectangle releases the focus back to
+## `node_watched` (usually the followed player) enters this node's own rect
+## (`position`/`size`, top-left anchored), it emits `camera.focus` with a
+## region context so `CameraDirector` tweens the camera to frame the area per
+## `region_fit_mode`; leaving the rectangle releases the focus back to
 ## following `node_watched` at normal zoom.
 ##
-## The rectangle's extent is authored visually: `node_shape` is a
-## `CollisionShape2D` under a non-monitoring `Area2D` child (`prefabs/
-## camera_focus_region.tscn`'s "Region"/"Shape" nodes) purely to get Godot's
-## built-in rectangle-shape editor gizmo (drag handles in the 2D viewport). No
-## physics query runs - detection is still a plain position check
-## (`CameraTranslation.is_point_in_region`) against `node_watched.global_position`.
+## Extends `Control` (like `ReferenceRect`) specifically so the rect is
+## editable via Godot's native resize handles the moment this node is
+## selected in the 2D editor - no override code, no child collision node.
+## `Control`s compose fine under a plain `Node2D` parent and respect the same
+## `Camera2D` transform, so this still behaves as a world-space marker; the
+## prefab's `mouse_filter` opts it out of receiving mouse input.
 
 @export_group("Region", "region_")
-## Draw the region's bounds as an outline - handy for a boss arena laid out in
-## the editor. Purely visual; detection works either way.
+## Draw the region's bounds as an outline at runtime too - handy to confirm
+## it matches what was authored in the editor. Purely visual; detection works
+## either way.
 @export var region_debug_draw: bool = true
+## `CENTERED` (default) always shows the whole region, possibly revealing area
+## outside it; `COVERED` never shows outside the region, possibly cropping
+## part of it. See `CameraTranslation.FocusFitMode`.
+@export var region_fit_mode: CameraTranslation.FocusFitMode = CameraTranslation.FocusFitMode.CENTERED
 
 @export_group("Nodes", "node_")
 @export var node_watched: Node2D
-## The `CollisionShape2D` (holding a `RectangleShape2D`) whose gizmo defines
-## the region's extent. Never queried for physics - shape data only.
-@export var node_shape: CollisionShape2D
 
 var is_watched_inside: bool = false
 
@@ -40,33 +42,22 @@ func _ready() -> void:
 func _process(p_delta: float) -> void:
 	if not Utility.is_object_valid(node_watched):
 		return
-	var region_size := get_region_size()
-	var inside := CameraTranslation.is_point_in_region(node_watched.global_position, global_position, region_size)
+	var region_center := global_position + size * 0.5
+	var inside := CameraTranslation.is_point_in_region(node_watched.global_position, region_center, size)
 	if inside == is_watched_inside:
 		return
 	is_watched_inside = inside
 	queue_redraw()
 	if inside:
-		EventBus.emit_semantic_event(EventIds.CAMERA_FOCUS, Utility.make_region_context(global_position, region_size))
+		var context := Utility.make_region_context(region_center, size)
+		context[Utility.CONTEXT_FIT_MODE_KEY] = region_fit_mode
+		EventBus.emit_semantic_event(EventIds.CAMERA_FOCUS, context)
 		return
 	EventBus.emit_semantic_event(EventIds.CAMERA_FOCUS, {})
-
-
-## World-space size of the region rectangle, read from `node_shape`'s
-## `RectangleShape2D` (falls back to `Tuning.active_profile.camera_focus_default_region_size` if unwired).
-func get_region_size() -> Vector2:
-	if not Utility.is_object_valid(node_shape):
-		return Tuning.active_profile.camera_focus_default_region_size
-	var rectangle_shape := node_shape.shape as RectangleShape2D
-	if not Utility.is_object_valid(rectangle_shape):
-		return Tuning.active_profile.camera_focus_default_region_size
-	return rectangle_shape.size * node_shape.scale
 
 
 func _draw() -> void:
 	if not region_debug_draw:
 		return
-	var region_size := get_region_size()
-	var rect := Rect2(-region_size * 0.5, region_size)
 	var color := Tuning.active_profile.camera_focus_active_color if is_watched_inside else Tuning.active_profile.camera_focus_idle_color
-	draw_rect(rect, color, false, Tuning.active_profile.camera_focus_border_width)
+	draw_rect(Rect2(Vector2.ZERO, size), color, false, Tuning.active_profile.camera_focus_border_width)

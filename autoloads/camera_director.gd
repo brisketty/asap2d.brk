@@ -69,10 +69,14 @@ func handle_semantic_event_emitted(p_event_id: StringName, p_context: Dictionary
 
 func handle_camera_focus(p_context: Dictionary) -> void:
 	if p_context.has(Utility.CONTEXT_SIZE_KEY):
+		var fit_mode: CameraTranslation.FocusFitMode = p_context.get(
+			Utility.CONTEXT_FIT_MODE_KEY, CameraTranslation.FocusFitMode.CENTERED
+		)
 		camera_rig.focus_on_region(
 			p_context[Utility.CONTEXT_POSITION_KEY],
 			p_context[Utility.CONTEXT_SIZE_KEY],
 			Tuning.active_profile.camera_focus_tween_seconds,
+			fit_mode,
 		)
 		return
 	if p_context.has(Utility.CONTEXT_POSITION_KEY):

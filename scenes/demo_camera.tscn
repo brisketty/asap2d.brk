@@ -1,57 +1,69 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://dc6ekot4lt1th"]
 
-[ext_resource type="Script" path="res://scenes/demo_camera.gd" id="1"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="2"]
-[ext_resource type="Resource" path="res://assets/theme_profile_complete.tres" id="3"]
+[ext_resource type="Script" uid="uid://biy75angnakc0" path="res://scenes/demo_camera.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://dbqlcku17p7m" path="res://icon.svg" id="2"]
+[ext_resource type="Script" uid="uid://pyy2nyx8r0v5" path="res://scripts/theme_profile.gd" id="2_ilmk4"]
+[ext_resource type="Resource" uid="uid://b70pxddnl1s4a" path="res://assets/theme_profile_complete.tres" id="3"]
 [ext_resource type="PackedScene" path="res://prefabs/camera_focus_region.tscn" id="4"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_boss"]
-size = Vector2(220, 220)
-
-[node name="CameraDemo" type="Node2D" node_paths=PackedStringArray("node_player", "node_crit_button", "node_shake_button", "node_hurt_button", "node_clear_button", "node_zoom_in_button", "node_zoom_out_button")]
+[node name="CameraDemo" type="Node2D" unique_id=1248680277 node_paths=PackedStringArray("node_player", "node_boss_region", "node_crit_button", "node_shake_button", "node_hurt_button", "node_clear_button", "node_zoom_in_button", "node_zoom_out_button", "node_fit_mode_button")]
 script = ExtResource("1")
-profile_available = [ExtResource("3")]
+profile_available = Array[ExtResource("2_ilmk4")]([ExtResource("3")])
 node_player = NodePath("Player")
+node_boss_region = NodePath("BossRegion")
 node_crit_button = NodePath("Ui/VBox/CritButton")
 node_shake_button = NodePath("Ui/VBox/ShakeButton")
 node_hurt_button = NodePath("Ui/VBox/HurtButton")
 node_clear_button = NodePath("Ui/VBox/ClearButton")
 node_zoom_in_button = NodePath("Ui/VBox/ZoomInButton")
 node_zoom_out_button = NodePath("Ui/VBox/ZoomOutButton")
+node_fit_mode_button = NodePath("Ui/VBox/FitModeButton")
 
-[node name="Player" type="Sprite2D" parent="."]
+[node name="Player" type="Sprite2D" parent="." unique_id=940146257]
 position = Vector2(576, 324)
 texture = ExtResource("2")
 
-[node name="BossRegion" parent="." instance=ExtResource("4") node_paths=PackedStringArray("node_watched")]
-position = Vector2(700, 300)
+[node name="BossRegion" parent="." unique_id=2114467781 node_paths=PackedStringArray("node_watched") instance=ExtResource("4")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 641.0
+offset_top = -220.0
+offset_right = 1841.0
+offset_bottom = 551.0
 node_watched = NodePath("../Player")
 
-[node name="Shape" parent="BossRegion/Region" index="0"]
-shape = SubResource("RectangleShape2D_boss")
+[node name="Ui" type="CanvasLayer" parent="." unique_id=1943892478]
 
-[node name="Ui" type="CanvasLayer" parent="."]
-
-[node name="VBox" type="VBoxContainer" parent="Ui"]
+[node name="VBox" type="VBoxContainer" parent="Ui" unique_id=717009307]
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 200.0
-offset_bottom = 240.0
+offset_bottom = 276.0
 
-[node name="CritButton" type="Button" parent="Ui/VBox"]
+[node name="CritButton" type="Button" parent="Ui/VBox" unique_id=517298575]
+layout_mode = 2
 text = "impact.crit (trauma)"
 
-[node name="ShakeButton" type="Button" parent="Ui/VBox"]
+[node name="ShakeButton" type="Button" parent="Ui/VBox" unique_id=1367596033]
+layout_mode = 2
 text = "camera.shake"
 
-[node name="HurtButton" type="Button" parent="Ui/VBox"]
+[node name="HurtButton" type="Button" parent="Ui/VBox" unique_id=354964789]
+layout_mode = 2
 text = "state.hurt"
 
-[node name="ClearButton" type="Button" parent="Ui/VBox"]
+[node name="ClearButton" type="Button" parent="Ui/VBox" unique_id=1595968029]
+layout_mode = 2
 text = "state.clear"
 
-[node name="ZoomInButton" type="Button" parent="Ui/VBox"]
+[node name="ZoomInButton" type="Button" parent="Ui/VBox" unique_id=1741804988]
+layout_mode = 2
 text = "camera.zoom in"
 
-[node name="ZoomOutButton" type="Button" parent="Ui/VBox"]
+[node name="ZoomOutButton" type="Button" parent="Ui/VBox" unique_id=160434141]
+layout_mode = 2
 text = "camera.zoom reset"
+
+[node name="FitModeButton" type="Button" parent="Ui/VBox" unique_id=1256031485]
+layout_mode = 2
+text = "focus fit: CENTERED"

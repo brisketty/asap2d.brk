@@ -8,6 +8,9 @@ const CONTEXT_MAGNITUDE_KEY := &"magnitude"
 const CONTEXT_SOURCE_ID_KEY := &"source_id"
 ## World-space extents of a region of interest (e.g. `camera.focus` zoom-to-fit).
 const CONTEXT_SIZE_KEY := &"size"
+## `CameraTranslation.FocusFitMode` for a region-of-interest focus - how the
+## region's aspect ratio reconciles with the viewport's.
+const CONTEXT_FIT_MODE_KEY := &"fit_mode"
 
 
 ## Objects can be freed or queued for deletion while remaining non-null, so a

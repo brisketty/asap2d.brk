@@ -57,7 +57,7 @@ up. **Living document — update it when reality changes.**
 | Tools | `scripts/{run_asset_scan,lint_conventions,tone_stream}.gd` | SceneTree scripts (run headless); ToneStream = procedural WAV for demos/tests |
 | Impact VFX (P1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | |
 | World & Env (P2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
-| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,camera_focus_region,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade; `CameraFocusRegion` = opt-in "region of interest" trigger (zoom-to-fit on enter) |
+| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,camera_focus_region,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade; `CameraFocusRegion` = opt-in "region of interest" trigger (zoom-to-fit on enter), a `Control` so its own `position`/`size` get native drag handles on the node itself (see F9), fit behavior per-region via `region_fit_mode` (`CameraTranslation.FocusFitMode`: `CENTERED` shows the whole region, may reveal area outside it; `COVERED` never shows outside the region, may crop part of it - CSS `contain`/`cover`) |
 | HUD (P4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/hud_translation.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
 | SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route,state_sfx_set}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients; `state_sfx_table` = opt-in enter/loop/exit sounds for `state.*` |
 | BGM (P6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
@@ -208,6 +208,20 @@ failures. Grep them out.
   Used throughout `scripts/tweens.gd`, `ScreenTileBorder.fade_to`,
   `ScreenShaderOverlay.fade_to`. Safe whenever the real value is always
   non-negative.
+- **R12. `Camera2D.zoom` is a magnification factor, not a "see more world"
+  factor.** `zoom = (2, 2)` **doubles apparent size** (zooms *in*, sees *less*
+  world); `zoom = (0.5, 0.5)` zooms *out* and sees *more*. `zoom = 1` is
+  neutral. Easy to get backwards (it reads like it should mean "zoom level =
+  how much world is visible", the opposite). `CameraTranslation.compute_fit_zoom`
+  had exactly this bug once — used `region_size / viewport_size` directly as
+  the zoom value instead of `viewport_size / region_size` — which happened to
+  *look* plausible in `CENTERED` mode (its `minf(..., 1.0)` clamp masked the
+  inversion for small regions) but was flagrant in `COVERED` mode (zoomed
+  *out* tremendously for a small region instead of zooming in to fill it).
+  Fixed: the fit ratio is always `viewport_size / region_size`; `CENTERED`
+  takes the `min` axis (clamped `<= 1.0`, never magnifies past native);
+  `COVERED` takes the `max` axis (no upper clamp - small regions legitimately
+  need large zoom-in to fill the screen).
 
 ### H — Headless / CLI / tooling
 
@@ -294,6 +308,34 @@ failures. Grep them out.
   `ScreenTileTranslation.pick_variation_index` take a unit in **0..1** (an
   *index* into a list). Both clamp defensively, so a swapped range degrades
   rather than crashes, but picks the wrong end of the list / wrong pitch bias.
+- **F9. Gizmo-editable extents without a real physics query**: `CameraFocusRegion`
+  wants a draggable rectangle in the 2D editor but never wants an actual
+  physics body. **Attempt 1 (superseded)**: a non-monitoring `Area2D` child
+  holding a `CollisionShape2D` (`RectangleShape2D`), purely to piggyback
+  Godot's shape-editor handles. Papercut: those handles only show when the
+  *child* `CollisionShape2D` is selected — selecting `CameraFocusRegion`
+  itself (the node you'd naturally click) shows nothing draggable. **Attempt 2
+  (does not compile, do not retry)**: overriding `_edit_get_rect` /
+  `_edit_use_rect` / `_edit_set_rect` on a `Node2D`. These exist in the engine
+  but are **not exposed as GDScript-overridable virtuals in 4.7** — Godot
+  errors "overrides a method from native class CanvasItem... won't be called
+  by the engine" (warnings-as-errors fails the build). They're wired up in
+  C++ for specific built-in nodes only (`GPUParticles2D`'s visibility rect,
+  etc.), not a general scripting hook. **Current approach**:
+  `CameraFocusRegion` extends `Control` instead of `Node2D` (like
+  `ReferenceRect`) and uses the node's own native `position`/`size` as the
+  region rect (top-left anchored, not centered). Selecting the node itself
+  then gets Godot's built-in Control resize handles for free — no override
+  code, no child node. A `Control` composes fine under a plain `Node2D`
+  parent and still respects the active `Camera2D`'s transform (canvas
+  transform applies to every `CanvasItem`, `Control` included), so it stays a
+  correct world-space marker; set `mouse_filter = MOUSE_FILTER_IGNORE` so it
+  never intercepts clicks meant for real UI. Detection stays a plain
+  `CameraTranslation.is_point_in_region` position check either way, never an
+  `Area2D`/physics signal or a `Control` input event. **Reuse this
+  `Control`-as-world-space-rect-marker pattern** for any future "author an
+  extent visually" prefab — not a raw `Vector2`/`Rect2` export, and not a
+  collision-shape workaround.
 
 ---
 
@@ -386,7 +428,17 @@ migrated from per-instance `@export` into `TuningProfile.camera_shake_*` ·
 `music_stem_floor_db`, and `KnockbackReceiver.knockback_strength`/
 `knockback_recover_seconds` likewise migrated into `TuningProfile`
 (`audio_spatial_*`, `audio_music_crossfade_seconds`, `audio_music_stem_floor_db`,
-`vfx_knockback_strength`, `vfx_knockback_recover_seconds`).
+`vfx_knockback_strength`, `vfx_knockback_recover_seconds`) ·
+`CameraTranslation.FocusFitMode` (`CENTERED`/`COVERED`) + `CameraFocusRegion.region_fit_mode`
+so a region-of-interest focus can either always show the whole region
+(`CENTERED`, may reveal area outside it) or never show outside the region
+(`COVERED`, may crop part of it) - threaded through `camera.focus`'s context
+(`Utility.CONTEXT_FIT_MODE_KEY`) into `CameraRig.focus_on_region`; a
+**Focus Fit** button on `demo_camera.tscn` toggles it live ·
+`CameraFocusRegion` now extends `Control` instead of `Node2D` (see F9) so its
+own `position`/`size` get Godot's native drag handles directly on the node -
+no more `Area2D`/`CollisionShape2D` indirection, and no more needing to
+select a child node just to resize the region.
 
 ---
 

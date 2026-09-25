@@ -86,13 +86,33 @@ static func is_point_in_region(p_point: Vector2, p_region_center: Vector2, p_reg
 	return rect.has_point(p_point)
 
 
-## The uniform `Camera2D.zoom` value that frames `p_region_size` inside
-## `p_viewport_size` (Godot's zoom convention: values above 1 show *more*
-## world, i.e. zoom out). `p_margin` pads the fit so the region's edges aren't
-## flush with the screen edge. Never zooms in past 1.0 just because the region
-## is smaller than the viewport.
-static func compute_fit_zoom(p_viewport_size: Vector2, p_region_size: Vector2, p_margin: float = 1.1) -> float:
+## How `compute_fit_zoom` reconciles a region's aspect ratio with the
+## viewport's (mirrors CSS `background-size: contain` / `cover`):
+## - `CENTERED`: the whole region always stays visible; the shorter axis may
+##   reveal area outside the region (letterboxed). Never zooms in past 1.0.
+## - `COVERED`: the viewport never shows anything outside the region; the
+##   longer axis of the region may extend past the screen edge (cropped).
+enum FocusFitMode { CENTERED, COVERED }
+
+## The uniform `Camera2D.zoom` value that fits `p_region_size` against
+## `p_viewport_size` per `p_fit_mode` (Godot's zoom convention: a zoom of (2, 2)
+## *doubles* apparent size, i.e. zooms *in* and shows *less* world; (0.5, 0.5)
+## zooms out and shows more). `p_margin` pads `CENTERED` so the region's edges
+## aren't flush with the screen edge (zooms out a bit further), and tightens
+## `COVERED` so it doesn't leave a sliver of background visible past the
+## region edge (zooms in a bit further).
+static func compute_fit_zoom(
+	p_viewport_size: Vector2,
+	p_region_size: Vector2,
+	p_margin: float = 1.1,
+	p_fit_mode: FocusFitMode = FocusFitMode.CENTERED,
+) -> float:
 	if p_viewport_size.x <= 0.0 or p_viewport_size.y <= 0.0:
 		return 1.0
-	var fit := maxf(p_region_size.x / p_viewport_size.x, p_region_size.y / p_viewport_size.y)
-	return maxf(fit * p_margin, 1.0)
+	if p_region_size.x <= 0.0 or p_region_size.y <= 0.0:
+		return 1.0
+	var ratio_x := p_viewport_size.x / p_region_size.x
+	var ratio_y := p_viewport_size.y / p_region_size.y
+	if p_fit_mode == FocusFitMode.COVERED:
+		return maxf(ratio_x, ratio_y) * p_margin
+	return minf(minf(ratio_x, ratio_y) / p_margin, 1.0)

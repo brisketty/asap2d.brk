@@ -84,10 +84,15 @@ func focus_on(p_global_position: Vector2, p_seconds: float) -> void:
 	focus_tween.tween_property(self, "global_position", p_global_position, p_seconds)
 
 
-## Pan to `p_global_position` and zoom out just enough to fit `p_region_size`
-## (world-space) on screen - the "show the whole boss arena" focus. Owns both
-## the position and zoom tweens so it never fights `zoom_to`/`focus_on` (R4).
-func focus_on_region(p_global_position: Vector2, p_region_size: Vector2, p_seconds: float) -> void:
+## Pan to `p_global_position` and zoom to fit `p_region_size` (world-space)
+## per `p_fit_mode` - the "show the boss arena" focus. Owns both the position
+## and zoom tweens so it never fights `zoom_to`/`focus_on` (R4).
+func focus_on_region(
+	p_global_position: Vector2,
+	p_region_size: Vector2,
+	p_seconds: float,
+	p_fit_mode: CameraTranslation.FocusFitMode = CameraTranslation.FocusFitMode.CENTERED,
+) -> void:
 	is_focused = true
 	if Utility.is_object_valid(focus_tween):
 		focus_tween.kill()
@@ -98,7 +103,7 @@ func focus_on_region(p_global_position: Vector2, p_region_size: Vector2, p_secon
 	focus_tween.tween_property(self, "global_position", p_global_position, p_seconds)
 	if Utility.is_object_valid(node_camera):
 		var target_zoom := CameraTranslation.compute_fit_zoom(
-			get_viewport_rect().size, p_region_size, Tuning.active_profile.camera_fit_zoom_margin
+			get_viewport_rect().size, p_region_size, Tuning.active_profile.camera_fit_zoom_margin, p_fit_mode
 		)
 		focus_tween.tween_property(node_camera, "zoom", Vector2(target_zoom, target_zoom), p_seconds)
 

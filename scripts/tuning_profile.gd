@@ -15,7 +15,6 @@ extends Resource
 @export var camera_focus_idle_color: Color = Color(0.3, 0.75, 1.0, 0.6)
 @export var camera_focus_active_color: Color = Color(1.0, 0.65, 0.15, 0.9)
 @export var camera_focus_border_width: float = 3.0
-@export var camera_focus_default_region_size: Vector2 = Vector2(640.0, 360.0)
 @export var camera_fit_zoom_margin: float = 1.1
 ## Fallback fade duration for a screen effect (`ScreenTileBorder`/
 ## `ScreenShaderOverlay`) whose `fade_to()` caller doesn't pass `p_seconds`.

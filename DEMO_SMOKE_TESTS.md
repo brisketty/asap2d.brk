@@ -95,22 +95,30 @@ Section shape: **Scene · Exercises · Controls · Expected · Notes**.
   a region-of-interest zoom-to-fit focus. A player marker auto-wanders in a
   circle over a checker backdrop and is registered as the camera target.
 - **Controls**: **Crit** / **Shake** / **Hurt** / **Clear** / **Zoom In** /
-  **Zoom Out**.
+  **Zoom Out** / **Focus Fit** (toggles `focus fit: CENTERED` ↔
+  `focus fit: COVERED`).
 - **Expected**:
   - The view follows the wandering marker against the checker backdrop, making
     the follow/shake/zoom motion easy to read.
   - An orange/blue-bordered box (`BossRegion`, a `CameraFocusRegion`) sits
-    beside the marker's wander loop. When the marker wanders inside it, the
-    border turns orange and the camera tweens to pan + zoom out just enough to
-    frame the whole box; leaving it releases the camera back to following the
-    marker and tweens the zoom back to normal. No button drives this — it's a
-    plain position check against the marker every frame
-    (`CameraTranslation.is_point_in_region`), the same pattern a boss-arena
-    trigger would use.
+    beside the marker's wander loop. `CameraFocusRegion` is a `Control` (like
+    `ReferenceRect`), so selecting `BossRegion` itself in the editor gives
+    Godot's native resize handles on its own `position`/`size` — no need to
+    select a child node. When the marker wanders inside it, the border turns orange and
+    the camera tweens to pan + zoom to frame the box per the **Focus Fit**
+    toggle: `CENTERED` (default) zooms out just enough that the whole box
+    stays visible, possibly showing a sliver of area outside it on the
+    shorter axis; `COVERED` never shows outside the box, but may crop part of
+    it. Toggle the button, leave and re-enter the box to see the difference —
+    the mode only takes effect on the next `camera.focus` trigger. No button
+    drives entry/exit itself — that's a plain position check against the
+    marker every frame (`CameraTranslation.is_point_in_region`), the same
+    pattern a boss-arena trigger would use.
   - Shake / Crit → trauma-based screen shake that decays, plus a one-shot tone
     (pitch varies a little each press). Crit should read as a **visibly bigger**
-    shake than a bare Shake press — both scale by `CameraRig.shake_intensity_scale`
-    (default `1.0`; raise it in the Inspector for an even punchier feel).
+    shake than a bare Shake press — both scale by
+    `Tuning.active_profile.camera_shake_intensity_scale` (default `1.0`; raise
+    it via the `Tuning` autoload's `.tscn` for an even punchier feel).
   - Hurt → a red vignette grade **and** a tiled red border (two colour
     variations, one layer under the vignette, one over it) both **fade in**
     together and stay until **Clear**; an enter blip plays once, then a low
