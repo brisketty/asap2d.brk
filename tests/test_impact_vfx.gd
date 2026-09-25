@@ -45,6 +45,12 @@ func _initialize() -> void:
 	failure_count += expect_int("build_lookup skips invalid rows",
 		ImpactTranslation.build_lookup(with_invalid).size(), 1)
 
+	# --- R7: a zeroed TuningProfile must not reach a true 0.0 time_scale ---
+	failure_count += expect_true("hitstop floor const stays > 0.0",
+		ImpactVfxSubsystem.HITSTOP_TIME_SCALE_FLOOR > 0.0)
+	failure_count += expect_true("clamp keeps a zeroed profile value off 0.0",
+		maxf(0.0, ImpactVfxSubsystem.HITSTOP_TIME_SCALE_FLOOR) > 0.0)
+
 	if failure_count > 0:
 		push_error("%d impact-vfx test(s) failed." % failure_count)
 		quit(1)

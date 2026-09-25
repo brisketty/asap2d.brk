@@ -22,7 +22,7 @@ static func shake_amount(p_trauma: float) -> float:
 
 
 ## `p_noise_x` / `p_noise_y` are noise samples in -1..1. `p_intensity_scale`
-## multiplies the final result - a single knob (`CameraRig.shake_intensity_scale`)
+## multiplies the final result - a single knob (`Tuning.active_profile.camera_shake_intensity_scale`)
 ## to make every shake punchier/softer without retuning the trauma table.
 static func compute_offset(
 	p_trauma: float,

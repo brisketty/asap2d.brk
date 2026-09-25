@@ -7,8 +7,6 @@ extends CanvasLayer
 ## subsystem, one instance below the state-grade shader and one above it (see
 ## `prefabs/camera_rig.tscn`).
 
-const DEFAULT_FADE_SECONDS := 0.35
-
 @export_group("Nodes", "node_")
 ## Tiles are built under this node (not the `CanvasLayer` itself) because
 ## `CanvasLayer` has no `modulate` to fade.
@@ -39,20 +37,21 @@ func configure(p_tile_set: ScreenTileSet) -> void:
 ## Alpha-crossfades to `p_tile_set` over `p_seconds`: the new set's tiles
 ## build immediately but fade in from transparent; a null/empty set fades the
 ## current tiles out, then clears them.
-func fade_to(p_tile_set: ScreenTileSet, p_seconds: float = DEFAULT_FADE_SECONDS) -> void:
+func fade_to(p_tile_set: ScreenTileSet, p_seconds: float = -1.0) -> void:
+	var seconds := p_seconds if p_seconds >= 0.0 else Tuning.active_profile.camera_screen_effect_default_fade_seconds
 	kill_fade()
 	if not Utility.is_object_valid(node_root):
 		return
 	if not Utility.is_object_valid(p_tile_set) or p_tile_set.tile_variations.is_empty():
 		fade_tween = create_tween()
-		fade_tween.tween_property(node_root, "modulate:a", 0.0, p_seconds)
+		fade_tween.tween_property(node_root, "modulate:a", 0.0, seconds)
 		fade_tween.tween_callback(clear_tiles)
 		return
 	active_tile_set = p_tile_set
 	rebuild()
 	node_root.modulate.a = 0.0
 	fade_tween = create_tween()
-	fade_tween.tween_property(node_root, "modulate:a", 1.0, p_seconds)
+	fade_tween.tween_property(node_root, "modulate:a", 1.0, seconds)
 
 
 func clear_tiles() -> void:

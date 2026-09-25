@@ -18,9 +18,6 @@ const PARALLAX_LAYER_IDS: PackedStringArray = [
 const AMBIENT_PARTICLE_ID := &"world.ambient"
 const OVERLAY_SHADER_ID := &"world.overlay"
 
-const SCROLL_SCALE_MIN := 0.15
-const SCROLL_SCALE_MAX := 1.0
-
 var parallax_rig: ParallaxRig
 var ambient_layer: AmbientParticleLayer
 var shader_overlay: ScreenShaderOverlay
@@ -66,7 +63,9 @@ func rebuild_world() -> void:
 		return
 	is_rebuilding = true
 	var textures := WorldTranslation.resolve_layer_textures(ThemeManager, PARALLAX_LAYER_IDS)
-	var scroll_scales := WorldTranslation.build_scroll_scales(textures.size(), SCROLL_SCALE_MIN, SCROLL_SCALE_MAX)
+	var scroll_scales := WorldTranslation.build_scroll_scales(
+		textures.size(), Tuning.active_profile.world_scroll_scale_min, Tuning.active_profile.world_scroll_scale_max
+	)
 	parallax_rig.configure(textures, scroll_scales)
 	ambient_layer.configure(ThemeManager.resolve_particle(AMBIENT_PARTICLE_ID))
 	shader_overlay.configure(ThemeManager.resolve_shader(OVERLAY_SHADER_ID))

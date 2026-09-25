@@ -14,12 +14,6 @@ extends Node2D
 ## physics query runs - detection is still a plain position check
 ## (`CameraTranslation.is_point_in_region`) against `node_watched.global_position`.
 
-const IDLE_COLOR := Color(0.3, 0.75, 1.0, 0.6)
-const ACTIVE_COLOR := Color(1.0, 0.65, 0.15, 0.9)
-const BORDER_WIDTH := 3.0
-## Used when `node_shape` isn't wired to a `RectangleShape2D` (defensive default).
-const DEFAULT_REGION_SIZE := Vector2(640.0, 360.0)
-
 @export_group("Region", "region_")
 ## Draw the region's bounds as an outline - handy for a boss arena laid out in
 ## the editor. Purely visual; detection works either way.
@@ -59,13 +53,13 @@ func _process(p_delta: float) -> void:
 
 
 ## World-space size of the region rectangle, read from `node_shape`'s
-## `RectangleShape2D` (falls back to `DEFAULT_REGION_SIZE` if unwired).
+## `RectangleShape2D` (falls back to `Tuning.active_profile.camera_focus_default_region_size` if unwired).
 func get_region_size() -> Vector2:
 	if not Utility.is_object_valid(node_shape):
-		return DEFAULT_REGION_SIZE
+		return Tuning.active_profile.camera_focus_default_region_size
 	var rectangle_shape := node_shape.shape as RectangleShape2D
 	if not Utility.is_object_valid(rectangle_shape):
-		return DEFAULT_REGION_SIZE
+		return Tuning.active_profile.camera_focus_default_region_size
 	return rectangle_shape.size * node_shape.scale
 
 
@@ -74,5 +68,5 @@ func _draw() -> void:
 		return
 	var region_size := get_region_size()
 	var rect := Rect2(-region_size * 0.5, region_size)
-	var color := ACTIVE_COLOR if is_watched_inside else IDLE_COLOR
-	draw_rect(rect, color, false, BORDER_WIDTH)
+	var color := Tuning.active_profile.camera_focus_active_color if is_watched_inside else Tuning.active_profile.camera_focus_idle_color
+	draw_rect(rect, color, false, Tuning.active_profile.camera_focus_border_width)

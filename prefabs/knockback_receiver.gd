@@ -9,12 +9,8 @@ extends Node
 ## is one way to render it. Entity movement code may instead read the same
 ## context and apply real velocity.
 
-const LURCH_SECONDS := 0.06
-
 @export_group("Knockback", "knockback_")
 @export var knockback_source_id: StringName
-@export var knockback_strength: float = 1.0
-@export var knockback_recover_seconds: float = 0.25
 
 @export_group("Nodes", "node_")
 @export var node_target: Node2D
@@ -39,7 +35,7 @@ func handle_semantic_event_emitted(p_event_id: StringName, p_context: Dictionary
 		return
 	var direction: Vector2 = p_context.get(Utility.CONTEXT_DIRECTION_KEY, Vector2.ZERO)
 	var magnitude: float = p_context.get(Utility.CONTEXT_MAGNITUDE_KEY, 0.0)
-	apply_knockback(direction * magnitude * knockback_strength)
+	apply_knockback(direction * magnitude * Tuning.active_profile.vfx_knockback_strength)
 
 
 func apply_knockback(p_offset: Vector2) -> void:
@@ -47,6 +43,6 @@ func apply_knockback(p_offset: Vector2) -> void:
 		knockback_tween.kill()
 	var origin := node_target.position
 	knockback_tween = create_tween()
-	knockback_tween.tween_property(node_target, "position", origin + p_offset, LURCH_SECONDS)
-	knockback_tween.tween_property(node_target, "position", origin, knockback_recover_seconds) \
+	knockback_tween.tween_property(node_target, "position", origin + p_offset, Tuning.active_profile.vfx_knockback_lurch_seconds)
+	knockback_tween.tween_property(node_target, "position", origin, Tuning.active_profile.vfx_knockback_recover_seconds) \
 		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)

@@ -11,9 +11,11 @@ extends Node
 ## Pure translation / bookkeeping lives in `ImpactTranslation` (autoload-free,
 ## unit-tested headless).
 
-## Hit-stop time scale. A tiny non-zero value rather than 0.0 so `_process` on
-## always-process nodes keeps ticking; visually indistinguishable from a freeze.
-const HITSTOP_TIME_SCALE := 0.0001
+## Hard floor for `Tuning.active_profile.vfx_hitstop_time_scale`. A tiny
+## non-zero value rather than 0.0 so `_process` on always-process nodes keeps
+## ticking; visually indistinguishable from a freeze. See STATE.md R7 - a
+## misconfigured TuningProfile must not be able to reintroduce a true freeze.
+const HITSTOP_TIME_SCALE_FLOOR := 0.0001
 
 @export_group("Intensity", "intensity_")
 ## Leave empty to use `ImpactTranslation.build_default_intensity_table()`.
@@ -71,7 +73,7 @@ func request_hitstop(p_seconds: float) -> void:
 	if hitstop_active:
 		return
 	hitstop_active = true
-	Engine.time_scale = HITSTOP_TIME_SCALE
+	Engine.time_scale = maxf(Tuning.active_profile.vfx_hitstop_time_scale, HITSTOP_TIME_SCALE_FLOOR)
 	check_hitstop()
 
 

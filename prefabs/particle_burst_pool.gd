@@ -4,8 +4,6 @@ extends Node
 ## (a one-shot GPUParticles2D). The Impact VFX subsystem calls `burst()`; the
 ## burst node is released back to the pool after its lifetime.
 
-const RELEASE_GRACE_SECONDS := 0.15
-
 @export_group("Nodes", "node_")
 @export var node_pool: NodePool
 
@@ -32,7 +30,7 @@ func burst(p_position: Vector2, p_particle_asset_id: StringName, p_amount: int) 
 	particles.restart()
 	particles.emitting = true
 
-	var lifetime: float = particles.lifetime + RELEASE_GRACE_SECONDS
+	var lifetime: float = particles.lifetime + Tuning.active_profile.vfx_particle_release_grace_seconds
 	var timer := get_tree().create_timer(lifetime)
 	timer.timeout.connect(func() -> void:
 		if Utility.is_object_valid(particles):

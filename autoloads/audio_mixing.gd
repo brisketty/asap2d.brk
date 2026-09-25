@@ -10,13 +10,6 @@ extends Node
 ##
 ## Pure profile / target logic lives in `AudioMixingTranslation`.
 
-const MIX_TWEEN_SECONDS := 1.5
-
-@export_group("Spatialisation", "spatial_")
-@export var spatial_max_distance: float = 2000.0
-@export var spatial_attenuation: float = 1.0
-@export_range(0.0, 3.0) var spatial_panning_strength: float = 1.0
-
 var sfx_reverb: AudioEffectReverb
 var active_profile_id: StringName = &"neutral"
 ## The biome's profile, restored when a transient `state.*` grade clears.
@@ -85,13 +78,13 @@ func apply_bus_profile(p_profile: BusProfile) -> void:
 			continue
 		var target_db: float = AudioMixingTranslation.bus_targets(p_profile)[bus_name]
 		mix_tween.tween_method(
-			set_bus_volume_db.bind(bus_index), AudioServer.get_bus_volume_db(bus_index), target_db, MIX_TWEEN_SECONDS)
+			set_bus_volume_db.bind(bus_index), AudioServer.get_bus_volume_db(bus_index), target_db, Tuning.active_profile.audio_mix_tween_seconds)
 
 	if Utility.is_object_valid(sfx_reverb):
 		mix_tween.tween_property(sfx_reverb, "wet",
-			AudioMixingTranslation.reverb_wet_for(p_profile), MIX_TWEEN_SECONDS)
+			AudioMixingTranslation.reverb_wet_for(p_profile), Tuning.active_profile.audio_mix_tween_seconds)
 		mix_tween.tween_property(sfx_reverb, "room_size",
-			AudioMixingTranslation.reverb_room_size_for(p_profile), MIX_TWEEN_SECONDS)
+			AudioMixingTranslation.reverb_room_size_for(p_profile), Tuning.active_profile.audio_mix_tween_seconds)
 
 
 func set_bus_volume_db(p_db: float, p_bus_index: int) -> void:
@@ -102,9 +95,9 @@ func set_bus_volume_db(p_db: float, p_bus_index: int) -> void:
 func apply_spatialisation(p_voice: AudioStreamPlayer2D) -> void:
 	if not Utility.is_object_valid(p_voice):
 		return
-	p_voice.max_distance = spatial_max_distance
-	p_voice.attenuation = spatial_attenuation
-	p_voice.panning_strength = spatial_panning_strength
+	p_voice.max_distance = Tuning.active_profile.audio_spatial_max_distance
+	p_voice.attenuation = Tuning.active_profile.audio_spatial_attenuation
+	p_voice.panning_strength = Tuning.active_profile.audio_spatial_panning_strength
 
 
 ## The dry-UI guarantee, for tooling / tests: the UI bus carries no effects.

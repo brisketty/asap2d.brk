@@ -5,9 +5,6 @@ extends Node2D
 
 signal finished
 
-const RISE_PIXELS := 52.0
-const LIFETIME_SECONDS := 0.75
-
 @export_group("Nodes", "node_")
 @export var node_label: Label
 
@@ -27,7 +24,9 @@ func play(p_text: String, p_color: Color) -> void:
 	node_label.text = p_text
 	node_label.modulate = p_color
 	modulate.a = 1.0
-	active_tween = Tweens.rise_and_fade(self, RISE_PIXELS, LIFETIME_SECONDS)
+	active_tween = Tweens.rise_and_fade(
+		self, Tuning.active_profile.ui_floating_text_rise_pixels, Tuning.active_profile.ui_floating_text_lifetime_seconds
+	)
 	active_tween.chain().tween_callback(emit_finished)
 
 

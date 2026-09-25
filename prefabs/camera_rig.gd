@@ -5,15 +5,6 @@ extends Node2D
 ## follows via `CameraDirector.set_followed(node)`; the rig never discovers
 ## targets itself. Shake math lives in `CameraTranslation`.
 
-@export_group("Shake", "shake_")
-@export var shake_decay_per_second: float = 1.2
-@export var shake_max_offset: Vector2 = Vector2(24.0, 16.0)
-@export var shake_max_roll: float = 0.06
-@export var shake_noise_speed: float = 34.0
-## Multiplies the final shake offset/rotation. One knob to make every shake
-## punchier or softer without retuning `CameraDirector.trauma_table`.
-@export var shake_intensity_scale: float = 1.0
-
 @export_group("Nodes", "node_")
 @export var node_camera: Camera2D
 @export var node_post_fx: ScreenShaderOverlay
@@ -51,16 +42,16 @@ func apply_shake(p_delta: float) -> void:
 		node_camera.offset = Vector2.ZERO
 		node_camera.rotation = 0.0
 		return
-	noise_time += p_delta * shake_noise_speed
-	trauma = CameraTranslation.decay_trauma(trauma, shake_decay_per_second, p_delta)
+	noise_time += p_delta * Tuning.active_profile.camera_shake_noise_speed
+	trauma = CameraTranslation.decay_trauma(trauma, Tuning.active_profile.camera_shake_decay_per_second, p_delta)
 	var noise_x := noise.get_noise_2d(noise_time, 0.0)
 	var noise_y := noise.get_noise_2d(0.0, noise_time)
 	var noise_r := noise.get_noise_2d(noise_time, noise_time)
 	node_camera.offset = CameraTranslation.compute_offset(
-		trauma, shake_max_offset, noise_x, noise_y, shake_intensity_scale
+		trauma, Tuning.active_profile.camera_shake_max_offset, noise_x, noise_y, Tuning.active_profile.camera_shake_intensity_scale
 	)
 	node_camera.rotation = CameraTranslation.compute_rotation(
-		trauma, shake_max_roll, noise_r, shake_intensity_scale
+		trauma, Tuning.active_profile.camera_shake_max_roll, noise_r, Tuning.active_profile.camera_shake_intensity_scale
 	)
 
 
@@ -106,7 +97,9 @@ func focus_on_region(p_global_position: Vector2, p_region_size: Vector2, p_secon
 	focus_tween.set_parallel(true)
 	focus_tween.tween_property(self, "global_position", p_global_position, p_seconds)
 	if Utility.is_object_valid(node_camera):
-		var target_zoom := CameraTranslation.compute_fit_zoom(get_viewport_rect().size, p_region_size)
+		var target_zoom := CameraTranslation.compute_fit_zoom(
+			get_viewport_rect().size, p_region_size, Tuning.active_profile.camera_fit_zoom_margin
+		)
 		focus_tween.tween_property(node_camera, "zoom", Vector2(target_zoom, target_zoom), p_seconds)
 
 

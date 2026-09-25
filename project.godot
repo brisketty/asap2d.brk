@@ -21,15 +21,16 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-EventBus="*res://autoloads/event_bus.gd"
-ThemeManager="*res://autoloads/theme_manager.gd"
-ImpactVfx="*res://autoloads/impact_vfx.gd"
-WorldEnvironment2D="*res://autoloads/world_environment_2d.gd"
-CameraDirector="*res://autoloads/camera_director.gd"
-HudPolish="*res://autoloads/hud_polish.gd"
-SfxPlayer="*res://autoloads/sfx_player.gd"
-MusicDirector="*res://autoloads/music_director.gd"
-AudioMixing="*res://autoloads/audio_mixing.gd"
+Tuning="*res://autoloads/tuning.tscn"
+EventBus="*res://autoloads/event_bus.tscn"
+ThemeManager="*res://autoloads/theme_manager.tscn"
+ImpactVfx="*res://autoloads/impact_vfx.tscn"
+WorldEnvironment2D="*res://autoloads/world_environment_2d.tscn"
+CameraDirector="*res://autoloads/camera_director.tscn"
+HudPolish="*res://autoloads/hud_polish.tscn"
+SfxPlayer="*res://autoloads/sfx_player.tscn"
+MusicDirector="*res://autoloads/music_director.tscn"
+AudioMixing="*res://autoloads/audio_mixing.tscn"
 
 [editor_plugins]
 

@@ -11,12 +11,9 @@ extends Node
 
 const AMBIENCE_ID_PREFIX := "ambience."
 const STINGER_ID_PREFIX := "stinger."
-const INTENSITY_TWEEN_SECONDS := 0.5
 
 @export_group("Music", "music_")
 @export var music_stem_count: int = 3
-@export var music_crossfade_seconds: float = 2.0
-@export var music_stem_floor_db: float = -40.0
 @export var music_bus: StringName = &"Music"
 @export var music_ambience_bus: StringName = &"Ambience"
 ## `state.* -> intensity floor`. Empty uses `build_default_state_tension()`.
@@ -52,7 +49,7 @@ func _ready() -> void:
 func make_player(p_bus: StringName, p_at_target: bool) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
 	player.bus = p_bus
-	player.volume_db = 0.0 if p_at_target else music_stem_floor_db
+	player.volume_db = 0.0 if p_at_target else Tuning.active_profile.audio_music_stem_floor_db
 	add_child(player)
 	return player
 
@@ -91,7 +88,7 @@ func play_theme(p_theme_id: StringName) -> void:
 			player.stop()
 			continue
 		player.stream = stream
-		player.volume_db = music_stem_floor_db
+		player.volume_db = Tuning.active_profile.audio_music_stem_floor_db
 		player.play()
 	current_theme_id = p_theme_id
 	crossfade(incoming_bank)
@@ -108,7 +105,9 @@ func crossfade(p_incoming_bank: int) -> void:
 	apply_intensity()
 	crossfade_tween = create_tween().set_parallel(true)
 	for i: int in music_stem_count:
-		crossfade_tween.tween_property(stem(outgoing_bank, i), "volume_db", music_stem_floor_db, music_crossfade_seconds)
+		crossfade_tween.tween_property(
+			stem(outgoing_bank, i), "volume_db", Tuning.active_profile.audio_music_stem_floor_db, Tuning.active_profile.audio_music_crossfade_seconds
+		)
 	crossfade_tween.chain().tween_callback(stop_bank.bind(outgoing_bank))
 
 
@@ -135,8 +134,8 @@ func apply_intensity() -> void:
 		intensity_tween.kill()
 	intensity_tween = create_tween().set_parallel(true)
 	for i: int in music_stem_count:
-		var target := MusicTranslation.stem_volume_db(i, current_intensity, music_stem_count, music_stem_floor_db)
-		intensity_tween.tween_property(stem(active_bank, i), "volume_db", target, INTENSITY_TWEEN_SECONDS)
+		var target := MusicTranslation.stem_volume_db(i, current_intensity, music_stem_count, Tuning.active_profile.audio_music_stem_floor_db)
+		intensity_tween.tween_property(stem(active_bank, i), "volume_db", target, Tuning.active_profile.audio_music_intensity_tween_seconds)
 
 
 func swap_ambience(p_biome_id: StringName) -> void:

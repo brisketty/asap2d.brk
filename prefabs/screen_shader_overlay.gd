@@ -4,8 +4,6 @@ extends CanvasLayer
 ## state vignette. `configure()` swaps instantly; `fade_to()` crossfades via the
 ## rect's alpha. A null material hides the rect entirely (defensive defaulting).
 
-const DEFAULT_FADE_SECONDS := 0.35
-
 @export_group("Nodes", "node_")
 @export var node_rect: ColorRect
 
@@ -26,20 +24,21 @@ func configure(p_shader_material: ShaderMaterial) -> void:
 	node_rect.visible = has_material
 
 
-func fade_to(p_shader_material: ShaderMaterial, p_seconds: float = DEFAULT_FADE_SECONDS) -> void:
+func fade_to(p_shader_material: ShaderMaterial, p_seconds: float = -1.0) -> void:
 	if not Utility.is_object_valid(node_rect):
 		return
+	var seconds := p_seconds if p_seconds >= 0.0 else Tuning.active_profile.camera_screen_effect_default_fade_seconds
 	kill_fade()
 	if not Utility.is_object_valid(p_shader_material):
 		fade_tween = create_tween()
-		fade_tween.tween_property(node_rect, "modulate:a", 0.0, p_seconds)
+		fade_tween.tween_property(node_rect, "modulate:a", 0.0, seconds)
 		fade_tween.tween_callback(clear_material)
 		return
 	node_rect.material = p_shader_material
 	node_rect.visible = true
 	node_rect.modulate.a = 0.0
 	fade_tween = create_tween()
-	fade_tween.tween_property(node_rect, "modulate:a", 1.0, p_seconds)
+	fade_tween.tween_property(node_rect, "modulate:a", 1.0, seconds)
 
 
 func clear_material() -> void:
