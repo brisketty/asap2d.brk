@@ -199,6 +199,38 @@ Section shape: **Scene · Exercises · Controls · Expected · Notes**.
 - **Notes**: `SFX_Reverb` is currently a direct effect on `SFX`, not a real send
   (`STATE.md` TODO). Silent headless, no error.
 
+## 9. `demo_tilemap_decorator.tscn` — TileMap Decorator (editor tool, not a subsystem)
+
+- **Exercises**: `TileMapDecorator`'s 19-layer mask & override workflow
+  (expanded past the spec's 11 — Top/Bottom/Left/Right each get their own
+  Gen_/Overrider pair and TileSet, since a `TileMapLayer` can only paint from
+  one `tile_set`) — edge-aware procedural generation into the 9 `Gen_*`
+  layers, skipping any cell a manual override already covers. This demo
+  pre-builds the 19-layer hierarchy and paints the region/overrides in code
+  (`_ready()`), since `Prepare Layers` and hand-painting are editor-only
+  actions; only **Generate Decorations** is exercised live.
+- **Controls**: **Generate Decorations** button.
+- **Expected**:
+  - **On load** a 10x6 region is already filled with yellow (Cover) tiles on
+    every cell *inside* it, framed by a ring of 8 distinct hues one cell
+    *outside* the region's edges (Back/Front x Top/Bottom/Left/Right — a
+    top-row tile sits one row above the region, not on the region's own top
+    row: edge decorations frame the region from outside, like a border, not
+    paint over its boundary cells). Each hue mixes light/dark shades (the
+    weighted pick, sourced from each Gen_ layer's own TileSet). Two **red**
+    marker tiles (one cell above the top edge's middle column, region
+    center) never move.
+  - Clicking **Generate Decorations** re-rolls the light/dark shade mix
+    across the region (new weighted picks) but the two red markers and the
+    `StatusLabel` cell counts stay fixed — only cosmetic shade varies.
+    `back T`/`back B`/`back L`/`back R` read 10/10/6/6; `front T` reads 9
+    (the red top-edge override skips exactly that one outside cell —
+    `front B` stays a full 10, since Top and Bottom no longer share a
+    layer); `cover` reads 59 (the red center override, inside the region).
+- **Notes**: `ThemeManager`/`EventBus` are not involved — this demo has no
+  autoload dependency at all, unlike the other 8. All art is placeholder
+  flat color, built in `demo_tilemap_decorator.gd`.
+
 ---
 
 ## Cross-cutting

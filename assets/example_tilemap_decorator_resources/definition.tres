@@ -1,0 +1,13 @@
+[gd_resource type="TileSet" format=3 uid="uid://cok0o5b2o2uin"]
+
+[ext_resource type="Texture2D" uid="uid://b1i5d1h4vjhk4" path="res://assets/example_tilemap_decorator_resources/block_texture.tres" id="1_4ag0g"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_035mg"]
+texture = ExtResource("1_4ag0g")
+texture_region_size = Vector2i(150, 150)
+0:0/0 = 0
+0:0/0/modulate = Color(0, 0, 0, 1)
+
+[resource]
+tile_size = Vector2i(150, 150)
+sources/0 = SubResource("TileSetAtlasSource_035mg")
