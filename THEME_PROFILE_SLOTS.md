@@ -23,7 +23,7 @@ For the `ThemeProfile` **fields themselves** (each `<kind>_assets` dict +
 `default_<kind>`), with a per-field example and a slot for sample visuals, see
 [`THEME_PROFILE_FIELDS.md`](THEME_PROFILE_FIELDS.md).
 
-Run `godot --headless --script res://scripts/run_asset_scan.gd` to get a
+Run `godot --headless --script res://addons/brisklance/self/scripts/run_asset_scan.gd` to get a
 prioritized list of ids referenced by scenes/prefabs but not yet mapped in the
 active profile (written to `exports/asset_worklist.md`).
 

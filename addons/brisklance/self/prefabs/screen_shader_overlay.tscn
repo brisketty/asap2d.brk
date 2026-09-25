@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/brisklance/self/prefabs/screen_shader_overlay.gd" id="1"]
+
+[node name="ScreenShaderOverlay" type="CanvasLayer" node_paths=PackedStringArray("node_rect")]
+script = ExtResource("1")
+node_rect = NodePath("Rect")
+
+[node name="Rect" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(1, 1, 1, 1)
+mouse_filter = 2

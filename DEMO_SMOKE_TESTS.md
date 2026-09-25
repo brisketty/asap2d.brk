@@ -1,6 +1,6 @@
 # DEMO_SMOKE_TESTS.md — manual walkthrough of every demo scene
 
-Each subsystem ships a demo scene under `scenes/`. This is the **human**
+Each subsystem ships a demo scene under `addons/brisklance/self/scenes/`. This is the **human**
 checklist: what to click and what you should see / hear. It complements the
 headless run in [`STATE.md`](STATE.md#how-to-run) — that only proves *0 script
 errors*, not that anything actually looks right.
@@ -14,7 +14,7 @@ errors*, not that anything actually looks right.
 - **Headless error check only** (no visuals, no audio device):
   ```
   GODOT="/d/Programs/Godot_v4.7/Godot_v4.7-stable_win64.exe"
-  "$GODOT" --headless --quit-after 200 res://scenes/demo_world.tscn
+  "$GODOT" --headless --quit-after 200 res://addons/brisklance/self/scenes/demo_world.tscn
   ```
 - **All art is placeholder.** The framework ships no textures — every unmapped
   sprite/tile id resolves to `res://icon.svg` via the ThemeManager fallback
@@ -22,7 +22,7 @@ errors*, not that anything actually looks right.
   that need to *show* something distinct build throwaway textures/tilesets in
   code (`demo_world`), or the look is just tinted Godot icons.
 - **All demo audio is procedural.** `demo_sfx` / `demo_music` / `demo_mixing`
-  synthesise tones with `ToneStream` (`scripts/tone_stream.gd`) — beeps and
+  synthesise tones with `ToneStream` (`addons/brisklance/self/scripts/tone_stream.gd`) — beeps and
   drones, not real sound design.
 - **`ThemeManager: <kind> '<id>' missing, using engine fallback.`** in the
   Output panel is normal for ids a profile deliberately doesn't map.

@@ -21,11 +21,11 @@ sensory presentation.
 
 | Piece | Path | Role |
 | --- | --- | --- |
-| `Utility` | `scripts/utility.gd` | `is_object_valid`, `make_spatial_context` |
-| `EventBus` (autoload) | `autoloads/event_bus.gd` | `emit_semantic_event(id, context)` / `semantic_event_emitted` |
-| `ThemeManager` (autoload) | `autoloads/theme_manager.gd` | `resolve_{sprite,audio,particle,shader}` with fallback ladder |
-| `ThemeProfile` | `scripts/theme_profile.gd` | id → asset maps + per-profile defaults |
-| `AssetIdScanner` | `scripts/asset_id_scanner.gd` | scene scan → artist worklist |
+| `Utility` | `addons/brisklance/self/scripts/utility.gd` | `is_object_valid`, `make_spatial_context` |
+| `EventBus` (autoload) | `addons/brisklance/self/autoloads/event_bus.gd` | `emit_semantic_event(id, context)` / `semantic_event_emitted` |
+| `ThemeManager` (autoload) | `addons/brisklance/self/autoloads/theme_manager.gd` | `resolve_{sprite,audio,particle,shader}` with fallback ladder |
+| `ThemeProfile` | `addons/brisklance/self/scripts/theme_profile.gd` | id → asset maps + per-profile defaults |
+| `AssetIdScanner` | `addons/brisklance/self/scripts/asset_id_scanner.gd` | scene scan → artist worklist |
 
 ### EventBus context contract
 
@@ -62,7 +62,7 @@ is catalogued in [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md).
 ### Generating the artist worklist
 
 ```gdscript
-var refs := AssetIdScanner.scan_directory("res://scenes")
+var refs := AssetIdScanner.scan_directory("res://addons/brisklance/self/scenes")
 print(AssetIdScanner.format_task_list(AssetIdScanner.build_task_list(refs, ThemeManager)))
 ```
 
@@ -71,23 +71,23 @@ first.
 
 ## Demo
 
-`scenes/foundation_demo.tscn` (the project's main scene) emits `&"impact.basic"`
+`addons/brisklance/self/scenes/foundation_demo.tscn` (the project's main scene) emits `&"impact.basic"`
 on a timer and on click. `DemoImpactPresenter` translates it into a spark sprite
 via `ThemeManager`. The on-screen button swaps between `theme_profile_complete`
 and `theme_profile_sparse` to show the fallback ladder take over live.
 
-Each subsystem has its own demo scene under `scenes/`. A manual click-through of
+Each subsystem has its own demo scene under `addons/brisklance/self/scenes/`. A manual click-through of
 all 8 — controls and expected on-screen / audible result — is in
 [`DEMO_SMOKE_TESTS.md`](DEMO_SMOKE_TESTS.md).
 
 ## Tests
 
-Headless `SceneTree` scripts under `tests/`, one per foundation piece:
+Headless `SceneTree` scripts under `addons/brisklance/self/tests/`, one per foundation piece:
 
 ```
-godot --headless --script res://tests/test_event_bus.gd
-godot --headless --script res://tests/test_theme_manager.gd
-godot --headless --script res://tests/test_asset_id_scanner.gd
+godot --headless --script res://addons/brisklance/self/tests/test_event_bus.gd
+godot --headless --script res://addons/brisklance/self/tests/test_theme_manager.gd
+godot --headless --script res://addons/brisklance/self/tests/test_asset_id_scanner.gd
 ```
 
 Each prints `All ... tests passed.` and exits `0`.
@@ -95,30 +95,30 @@ Each prints `All ... tests passed.` and exits `0`.
 ## Subsystems
 
 Built on this foundation, each an autoload manager (`<Name>Subsystem` class,
-`<Name>` autoload) plus `prefabs/` components:
+`<Name>` autoload) plus `addons/brisklance/self/prefabs/` components:
 
 - **Impact & Combat VFX** (`ImpactVfx`) — ✅ pooled particle bursts, hit-stop,
   `HitFlash` / `KnockbackReceiver` / `SquashStretch` components.
-  Demo: `scenes/demo_impact_vfx.tscn`.
+  Demo: `addons/brisklance/self/scenes/demo_impact_vfx.tscn`.
 - **World & Environment** (`WorldEnvironment2D`) — ✅ biome-driven parallax rig,
   ambient particle layer, full-screen shader overlay, `AnimatedTileDriver`
   (per-biome `TileSet` swap); switches the active `ThemeProfile` per biome.
-  Demo: `scenes/demo_world.tscn`.
+  Demo: `addons/brisklance/self/scenes/demo_world.tscn`.
 - **Camera & Post-Processing** (`CameraDirector`) — ✅ trauma-based screen shake,
   zoom/focus tweens, state-driven post-FX grades (hurt vignette). Owns the
-  `Camera2D`; gameplay calls `set_followed(node)`. Demo: `scenes/demo_camera.tscn`.
+  `Camera2D`; gameplay calls `set_followed(node)`. Demo: `addons/brisklance/self/scenes/demo_camera.tscn`.
 - **UI & HUD Polish** (`HudPolish`) — ✅ pooled floating damage/heal numbers,
   `CatchUpBar` (trailing-fill health bar), `HoverPop`, a `Tweens` recipe library.
-  Demo: `scenes/demo_hud.tscn`.
+  Demo: `addons/brisklance/self/scenes/demo_hud.tscn`.
 - **Polyphonic Audio / SFX** (`SfxPlayer`) — ✅ route table, pooled positional +
   dry voices, per-voice pitch/volume randomisation, orphan-clip safety on scene
-  change. Demo: `scenes/demo_sfx.tscn`.
+  change. Demo: `addons/brisklance/self/scenes/demo_sfx.tscn`.
 - **BGM & Ambience** (`MusicDirector`) — ✅ two-bank stem crossfade, intensity
   layering (`music.tension`), per-biome ambience loop, stingers.
-  Demo: `scenes/demo_music.tscn`.
+  Demo: `addons/brisklance/self/scenes/demo_music.tscn`.
 - **Audio Bus / Mixing** (`AudioMixing`) — ✅ per-biome bus gain + SFX reverb
   tweens via a `BusProfile`, structural dry-`UI` bus, central positional-audio
-  config. Demo: `scenes/demo_mixing.tscn`.
+  config. Demo: `addons/brisklance/self/scenes/demo_mixing.tscn`.
 
 All seven subsystems are implemented. Remaining work (per-phase follow-ups,
 tooling, CI) is tracked in `REMAINING_TASKS.md`.

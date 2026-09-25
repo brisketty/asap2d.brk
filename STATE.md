@@ -31,7 +31,7 @@ up. **Living document — update it when reality changes.**
   `SfxPlayer.state_sfx_table` (enter/loop/exit sounds for `state.*`). See
   gotcha **R10** below for the new `CanvasLayer.layer` convention this
   introduced.
-- **2026-09-26 addition**: `TileMapDecorator` (`prefabs/tilemap_decorator.gd`)
+- **2026-09-26 addition**: `TileMapDecorator` (`addons/brisklance/self/prefabs/tilemap_decorator.gd`)
   — an editor-time procedural TileMap decoration tool (6-layer mask & override
   workflow, `@export_tool_button` actions) + `demo_tilemap_decorator.tscn`
   (§9 in `DEMO_SMOKE_TESTS.md`). Outside the 7-subsystem framework: no
@@ -56,28 +56,28 @@ up. **Living document — update it when reality changes.**
 | What | Path | Notes |
 | --- | --- | --- |
 | Godot editor | `D:\Programs\Godot_v4.7\Godot_v4.7-stable_win64.exe` | **Not on PATH.** Godot **4.7** stable (despite `project.godot` `features` saying `4.6`). GL Compatibility renderer. |
-| Foundation | `scripts/{utility,theme_profile,asset_id_scanner,event_ids}.gd`, `autoloads/{event_bus,theme_manager}.gd` | pillars: EventBus (semantic emission), ThemeManager (resolution + fallback), ThemeProfile, AssetIdScanner |
-| Tuning | `scripts/tuning_profile.gd` (`TuningProfile`), `autoloads/tuning.gd` (`Tuning`) | central swappable numeric-constant profile (camera/audio/vfx/world/ui durations, colors, thresholds), mirrors ThemeProfile/ThemeManager but flat scalars - no resolve ladder, `active_profile` is guaranteed non-null after `_ready()`. Registered **first** in `project.godot` autoloads since `AudioMixing._ready()` reads it synchronously. |
-| Object pool | `prefabs/node_pool.{gd,tscn}` | `NodePool` — generic; prewarm / acquire / release / ceiling-recycle |
-| Tween recipes | `scripts/tweens.gd` | `Tweens` — static `pop` / `fade_out` / `rise_and_fade` / `shake` |
-| Tools | `scripts/{run_asset_scan,lint_conventions,tone_stream}.gd` | SceneTree scripts (run headless); ToneStream = procedural WAV for demos/tests |
-| Impact VFX (P1) | `autoloads/impact_vfx.gd` (`ImpactVfx`), `scripts/impact_{translation,intensity}.gd`, `prefabs/particle_burst*`, `prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | |
-| World & Env (P2) | `autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `scripts/world_translation.gd`, `prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
-| Camera (P3) | `autoloads/camera_director.gd` (`CameraDirector`), `scripts/camera_{translation,trauma}.gd`, `prefabs/{camera_rig,camera_focus_region,screen_tile_border}.{gd,tscn}`, `scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade; `CameraFocusRegion` = opt-in "region of interest" trigger (zoom-to-fit on enter), a `Control` so its own `position`/`size` get native drag handles on the node itself (see F9), fit behavior per-region via `region_fit_mode` (`CameraTranslation.FocusFitMode`: `CENTERED` shows the whole region, may reveal area outside it; `COVERED` never shows outside the region, may crop part of it - CSS `contain`/`cover`) |
-| HUD (P4) | `autoloads/hud_polish.gd` (`HudPolish`), `scripts/hud_translation.gd`, `prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
-| SFX (P5) | `autoloads/sfx_player.gd` (`SfxPlayer`), `scripts/{sfx_translation,sfx_route,state_sfx_set}.gd`, `prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients; `state_sfx_table` = opt-in enter/loop/exit sounds for `state.*` |
-| BGM (P6) | `autoloads/music_director.gd` (`MusicDirector`), `scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
-| Mixing (P7) | `autoloads/audio_mixing.gd` (`AudioMixing`), `scripts/{audio_mixing_translation,bus_profile}.gd`, `default_bus_layout.tres` | `Master / Music / Ambience / SFX / UI`; SFX reverb added at runtime |
-| Shaders | `assets/shaders/{biome_tint,hurt_vignette}.gdshader` | |
-| Theme profiles | `assets/theme_profile_{complete,sparse,forest,cave}.tres` — fields explained in [`THEME_PROFILE_FIELDS.md`](THEME_PROFILE_FIELDS.md) | |
-| Demos | `scenes/foundation_demo.tscn` (main scene), `scenes/demo_{impact_vfx,world,camera,hud,sfx,music,mixing,tilemap_decorator}.tscn` | 9 total; per-demo click-through + expected result in [`DEMO_SMOKE_TESTS.md`](DEMO_SMOKE_TESTS.md) |
-| TileMap Decorator (editor tool) | `prefabs/tilemap_decorator.{gd,tscn}` (`TileMapDecorator`), `scripts/tilemap_decorator_translation.gd`, `scenes/demo_tilemap_decorator.{gd,tscn}` | `@tool`; 19-layer mask & override workflow (expanded past the spec's 11 - Top/Bottom/Left/Right each get their own Gen_/Overrider pair since a TileMapLayer can only paint from one `tile_set`); 10 `tileset_*` exports (one per category + RegionDefinition) that "Prepare Layers" syncs onto their matching layer(s); 9 `sparseness_*` knobs (0..1, independent of tile weight) for how often a cell is left empty; `@export_tool_button` "Prepare Layers"/"Generate Decorations"; weighted picks read straight off each Gen_* layer's own `tile_set` (`TileData.probability`), no ruleset resource; **not** an EventBus subsystem — no autoload, no ThemeProfile integration |
-| Tests | `tests/test_*.gd` (15), `tests/fixture_intensity.tres` | headless `SceneTree` scripts |
+| Foundation | `addons/brisklance/self/scripts/{utility,theme_profile,asset_id_scanner,event_ids}.gd`, `addons/brisklance/self/autoloads/{event_bus,theme_manager}.gd` | pillars: EventBus (semantic emission), ThemeManager (resolution + fallback), ThemeProfile, AssetIdScanner |
+| Tuning | `addons/brisklance/self/scripts/tuning_profile.gd` (`TuningProfile`), `addons/brisklance/self/autoloads/tuning.gd` (`Tuning`) | central swappable numeric-constant profile (camera/audio/vfx/world/ui durations, colors, thresholds), mirrors ThemeProfile/ThemeManager but flat scalars - no resolve ladder, `active_profile` is guaranteed non-null after `_ready()`. Registered **first** in `project.godot` autoloads since `AudioMixing._ready()` reads it synchronously. |
+| Object pool | `addons/brisklance/self/prefabs/node_pool.{gd,tscn}` | `NodePool` — generic; prewarm / acquire / release / ceiling-recycle |
+| Tween recipes | `addons/brisklance/self/scripts/tweens.gd` | `Tweens` — static `pop` / `fade_out` / `rise_and_fade` / `shake` |
+| Tools | `addons/brisklance/self/scripts/{run_asset_scan,lint_conventions,tone_stream}.gd` | SceneTree scripts (run headless); ToneStream = procedural WAV for demos/tests |
+| Impact VFX (P1) | `addons/brisklance/self/autoloads/impact_vfx.gd` (`ImpactVfx`), `addons/brisklance/self/scripts/impact_{translation,intensity}.gd`, `addons/brisklance/self/prefabs/particle_burst*`, `addons/brisklance/self/prefabs/{hit_flash,knockback_receiver,squash_stretch}.{gd,tscn}` | |
+| World & Env (P2) | `addons/brisklance/self/autoloads/world_environment_2d.gd` (`WorldEnvironment2D`), `addons/brisklance/self/scripts/world_translation.gd`, `addons/brisklance/self/prefabs/{parallax_rig,ambient_particle_layer,screen_shader_overlay,animated_tile_driver}.{gd,tscn}` | |
+| Camera (P3) | `addons/brisklance/self/autoloads/camera_director.gd` (`CameraDirector`), `addons/brisklance/self/scripts/camera_{translation,trauma}.gd`, `addons/brisklance/self/prefabs/{camera_rig,camera_focus_region,screen_tile_border}.{gd,tscn}`, `addons/brisklance/self/scripts/screen_tile_{set,translation}.gd` | owns the `Camera2D`; `set_followed(node)`; optional tiled border under/over the state grade; `CameraFocusRegion` = opt-in "region of interest" trigger (zoom-to-fit on enter), a `Control` so its own `position`/`size` get native drag handles on the node itself (see F9), fit behavior per-region via `region_fit_mode` (`CameraTranslation.FocusFitMode`: `CENTERED` shows the whole region, may reveal area outside it; `COVERED` never shows outside the region, may crop part of it - CSS `contain`/`cover`) |
+| HUD (P4) | `addons/brisklance/self/autoloads/hud_polish.gd` (`HudPolish`), `addons/brisklance/self/scripts/hud_translation.gd`, `addons/brisklance/self/prefabs/{floating_damage_text,catch_up_bar,hover_pop}.{gd,tscn}` | floating text is **world-space** |
+| SFX (P5) | `addons/brisklance/self/autoloads/sfx_player.gd` (`SfxPlayer`), `addons/brisklance/self/scripts/{sfx_translation,sfx_route,state_sfx_set}.gd`, `addons/brisklance/self/prefabs/sfx_voice_pool.{gd,tscn}` + `sfx_voice_{2d,ui}.tscn` | pools under the autoload; `notify_scene_change()` cuts transients; `state_sfx_table` = opt-in enter/loop/exit sounds for `state.*` |
+| BGM (P6) | `addons/brisklance/self/autoloads/music_director.gd` (`MusicDirector`), `addons/brisklance/self/scripts/music_translation.gd` | two-bank stem crossfade; players created in the autoload |
+| Mixing (P7) | `addons/brisklance/self/autoloads/audio_mixing.gd` (`AudioMixing`), `addons/brisklance/self/scripts/{audio_mixing_translation,bus_profile}.gd`, `default_bus_layout.tres` | `Master / Music / Ambience / SFX / UI`; SFX reverb added at runtime |
+| Shaders | `addons/brisklance/self/assets/shaders/{biome_tint,hurt_vignette}.gdshader` | |
+| Theme profiles | `addons/brisklance/self/assets/theme_profile_{complete,sparse,forest,cave}.tres` — fields explained in [`THEME_PROFILE_FIELDS.md`](THEME_PROFILE_FIELDS.md) | |
+| Demos | `addons/brisklance/self/scenes/foundation_demo.tscn` (main scene), `addons/brisklance/self/scenes/demo_{impact_vfx,world,camera,hud,sfx,music,mixing,tilemap_decorator}.tscn` | 9 total; per-demo click-through + expected result in [`DEMO_SMOKE_TESTS.md`](DEMO_SMOKE_TESTS.md) |
+| TileMap Decorator (editor tool) | `addons/brisklance/self/prefabs/tilemap_decorator.{gd,tscn}` (`TileMapDecorator`), `addons/brisklance/self/scripts/tilemap_decorator_translation.gd`, `addons/brisklance/self/scenes/demo_tilemap_decorator.{gd,tscn}` | `@tool`; 19-layer mask & override workflow (expanded past the spec's 11 - Top/Bottom/Left/Right each get their own Gen_/Overrider pair since a TileMapLayer can only paint from one `tile_set`); 10 `tileset_*` exports (one per category + RegionDefinition) that "Prepare Layers" syncs onto their matching layer(s); 9 `sparseness_*` knobs (0..1, independent of tile weight) for how often a cell is left empty; `@export_tool_button` "Prepare Layers"/"Generate Decorations"; weighted picks read straight off each Gen_* layer's own `tile_set` (`TileData.probability`), no ruleset resource; **not** an EventBus subsystem — no autoload, no ThemeProfile integration |
+| Tests | `addons/brisklance/self/tests/test_*.gd` (15), `addons/brisklance/self/tests/fixture_intensity.tres` | headless `SceneTree` scripts |
 | CI | `.github/workflows/test.yml` | import → lint → suites → worklist-drift check, on every push/PR |
 | Worklist | `exports/asset_worklist.md` | generated by `run_asset_scan`; git-tracked (`.gitignore` keeps just this file under `/exports`) |
 
 Every autoload above is registered from a `.tscn` wrapper
-(`autoloads/<name>.tscn` — one `Node` with the matching `.gd` script
+(`addons/brisklance/self/autoloads/<name>.tscn` — one `Node` with the matching `.gd` script
 attached), not the bare script — see R2. The table's `.gd` paths are still the
 right place to read/edit logic; open the `.tscn` only to assign/save an
 exported resource (`TuningProfile`, a route table, `ThemeManager.profile_fallback_*`, ...)
@@ -99,15 +99,15 @@ for t in test_utility test_event_bus test_theme_manager test_tuning test_asset_i
 		 test_node_pool test_impact_vfx test_world_environment test_camera_director \
 		 test_hud_polish test_sfx_player test_music_director test_audio_mixing \
 		 test_screen_tile test_tilemap_decorator; do
-  "$GODOT" --headless --script res://tests/$t.gd
+  "$GODOT" --headless --script res://addons/brisklance/self/tests/$t.gd
 done
 
 # lint + asset worklist (both also run in CI)
-"$GODOT" --headless --script res://scripts/lint_conventions.gd
-"$GODOT" --headless --script res://scripts/run_asset_scan.gd
+"$GODOT" --headless --script res://addons/brisklance/self/scripts/lint_conventions.gd
+"$GODOT" --headless --script res://addons/brisklance/self/scripts/run_asset_scan.gd
 
 # a demo scene, headless, for N frames
-"$GODOT" --headless --quit-after 200 res://scenes/demo_camera.tscn
+"$GODOT" --headless --quit-after 200 res://addons/brisklance/self/scenes/demo_camera.tscn
 
 # import / global-class registration check (SEE GOTCHA H4 — dirties tracked files)
 "$GODOT" --headless --editor --quit
@@ -161,7 +161,7 @@ failures. Grep them out.
   `[node]` line.** Hand-writing `node_foo = NodePath("Bar")` alone leaves
   `node_foo` **null** at runtime. When overriding an exported ref on an
   *instanced* child, put `node_paths=` on that child's `[node]` line too. Every
-  `.tscn` in `scenes/`/`prefabs/` that wires a `node_*` export does this.
+  `.tscn` in `addons/brisklance/self/scenes/`/`addons/brisklance/self/prefabs/` that wires a `node_*` export does this.
 - **R2. Autoloads can't wire `@export` node refs.** Subsystem managers therefore
   **create their pools / persistent children in `_ready()`** and hold them in
   plain `var`s (the HudPolish / SfxPlayer / MusicDirector / CameraDirector
@@ -169,7 +169,7 @@ failures. Grep them out.
   this way (no sibling nodes exist to point at in a one-node autoload scene).
   **A `@export` config var (route tables, `TuningProfile`, etc.) CAN now be set
   in the inspector**: every autoload is registered via a thin wrapper scene
-  (`autoloads/<name>.tscn` — one `Node` with the script attached), not the bare
+  (`addons/brisklance/self/autoloads/<name>.tscn` — one `Node` with the script attached), not the bare
   `.gd`, specifically so the Inspector can save property overrides onto that
   scene's root node. Open the `.tscn`, assign the resource/array, save — it
   persists across editor/game restarts. Still keep a sensible code default
@@ -217,7 +217,7 @@ failures. Grep them out.
   function's default needs to be centrally tunable, use a negative sentinel
   (`p_seconds: float = -1.0`) and resolve it in the function body
   (`var seconds := p_seconds if p_seconds >= 0.0 else Tuning.active_profile.foo`).
-  Used throughout `scripts/tweens.gd`, `ScreenTileBorder.fade_to`,
+  Used throughout `addons/brisklance/self/scripts/tweens.gd`, `ScreenTileBorder.fade_to`,
   `ScreenShaderOverlay.fade_to`. Safe whenever the real value is always
   non-negative.
 - **R12. `Camera2D.zoom` is a magnification factor, not a "see more world"
@@ -241,10 +241,10 @@ failures. Grep them out.
   `preload`s a script naming `EventBus`/`ThemeManager`/any autoload as a bare
   identifier fails to *compile* ("Identifier not found") — which also disables
   its `static` methods. **Pattern:** each subsystem's pure logic lives in an
-  autoload-free `scripts/<name>_translation.gd` (`class_name`, static, refs only
+  autoload-free `addons/brisklance/self/scripts/<name>_translation.gd` (`class_name`, static, refs only
   other `class_name` globals + `*_route`/`*_intensity` resources) and is
   unit-tested there. Node wiring is verified by running a demo scene
-  (`godot --headless res://scenes/<demo>.tscn`) or a throwaway smoke scene.
+  (`godot --headless res://addons/brisklance/self/scenes/<demo>.tscn`) or a throwaway smoke scene.
 - **H2. EditorScripts can't be driven headless.**
   `--headless --editor --script <EditorScript>` hangs (editor stays open);
   `--script` alone runs it as a plain script, not `_run()`. Runnable tools
@@ -261,7 +261,7 @@ failures. Grep them out.
   `git checkout -- .` to clean it — that also nukes your own uncommitted edits**
   (learned the hard way). (`570d980` bundled such churn into a docs commit —
   left as-is, not worth force-pushing public history.)
-- **H5. Smoke scenes** are throwaway `scenes/_smoke_*.{gd,tscn}` — run, then
+- **H5. Smoke scenes** are throwaway `addons/brisklance/self/scenes/_smoke_*.{gd,tscn}` — run, then
   `rm` both files **and** any `_smoke_*.uid` the import generated (one slipped
   into an early commit). Never commit them.
 - **H6. `bc` is not installed** in the Git Bash env; sum in the shell loop.
@@ -275,7 +275,7 @@ failures. Grep them out.
   **Keep framework prefab `_init` trivial.** It also walks `.tres`/`.res` and
   recurses into script-backed `Resource` values (arrays + dicts), gated on
   `PROPERTY_USAGE_SCRIPT_VARIABLE`, with a per-file instance-id cycle guard.
-  `run_asset_scan` scans `res://scenes` + `res://prefabs` + `res://assets`.
+  `run_asset_scan` scans `res://addons/brisklance/self/scenes` + `res://addons/brisklance/self/prefabs` + `res://addons/brisklance/self/assets`.
   **Code-built defaults are invisible** (e.g. `build_default_intensity_table`) —
   you can't scan code.
 - **F2. `resolve_sprite` never returns null** (`res://icon.svg` last resort).
@@ -295,7 +295,7 @@ failures. Grep them out.
   `AssetIdScanner` gets `<KIND>_ID_SUFFIX` / `<KIND>_KIND` + a `classify_property`
   branch (more specific suffix first — `_post_fx_asset_id` before
   `_shader_asset_id`) + an `is_reference_mapped` branch; add a `has_<kind>` stub
-  to `tests/test_asset_id_scanner.gd`'s `StubThemeManager`. **The
+  to `addons/brisklance/self/tests/test_asset_id_scanner.gd`'s `StubThemeManager`. **The
   dict-of-dicts `ThemeProfile` refactor was considered and rejected** (explicit
   typed exports read better in the inspector).
 - **F5. No `ThemeProfile` inheritance.** A biome swap replaces the *whole* active
@@ -305,7 +305,7 @@ failures. Grep them out.
 - **F6. Test harness**: `extends SceneTree`, `func _initialize()`, `expect_int`/
   `expect_true`/`expect_str` returning 0/1, tally into `failure_count`,
   `push_error` + `quit(1)` on failure else `print("All ... passed.") ; quit(0)`.
-  Copy an existing `tests/test_*.gd`.
+  Copy an existing `addons/brisklance/self/tests/test_*.gd`.
 - **F7. `AssetIdScanner` only classifies single-id properties, not collections.**
   `SfxRoute.route_audio_variation_ids` (`Array[StringName]`) is a real audio-id
   list but doesn't end in a scannable suffix on a scalar, so
@@ -428,8 +428,8 @@ refactor · merge to `main` + push · `screen_tile` kind + `ScreenTileBorder` ·
 `SfxPlayer.state_sfx_table` enter/loop/exit lifecycle · `DEMO_SMOKE_TESTS.md` ·
 `THEME_PROFILE_FIELDS.md` · `CameraRig.focus_on_region` (zoom-to-fit) +
 `CameraFocusRegion` region-of-interest trigger prefab · `demo_camera.tscn`
-checker backdrop · `Tuning`/`TuningProfile` knob (`scripts/tuning_profile.gd`,
-`autoloads/tuning.gd`) centralizing scattered subsystem `const`s across
+checker backdrop · `Tuning`/`TuningProfile` knob (`addons/brisklance/self/scripts/tuning_profile.gd`,
+`addons/brisklance/self/autoloads/tuning.gd`) centralizing scattered subsystem `const`s across
 camera/audio/vfx/world/ui, replacing ~15 one-off consts and 2 duplicated
 `0.35`-second fade defaults · every autoload registered via a `.tscn` wrapper
 scene instead of a bare `.gd`, so `@export` config (route tables, fallback

@@ -1,0 +1,25 @@
+[gd_resource type="TileSet" format=3 uid="uid://b15sr6neikohi"]
+
+[ext_resource type="Texture2D" uid="uid://ds6bmf6p4inwc" path="res://addons/brisklance/self/assets/graphics/bushes_2.png" id="1_iuobh"]
+[ext_resource type="Texture2D" uid="uid://nqj6tux0va1j" path="res://addons/brisklance/self/assets/graphics/bushes_3.png" id="2_titrj"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n2pdp"]
+texture = ExtResource("1_iuobh")
+texture_region_size = Vector2i(300, 150)
+0:0/next_alternative_id = 2
+0:0/0 = 0
+0:0/1 = 1
+0:0/1/flip_h = true
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vfbf8"]
+texture = ExtResource("2_titrj")
+texture_region_size = Vector2i(300, 150)
+0:0/next_alternative_id = 2
+0:0/0 = 0
+0:0/1 = 1
+0:0/1/flip_h = true
+
+[resource]
+tile_size = Vector2i(150, 150)
+sources/0 = SubResource("TileSetAtlasSource_n2pdp")
+sources/1 = SubResource("TileSetAtlasSource_vfbf8")

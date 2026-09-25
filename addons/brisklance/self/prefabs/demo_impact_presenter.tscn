@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/brisklance/self/prefabs/demo_impact_presenter.gd" id="1"]
+
+[node name="DemoImpactPresenter" type="Node2D" node_paths=PackedStringArray("node_status_label")]
+script = ExtResource("1")
+node_status_label = NodePath("StatusLabel")
+
+[node name="StatusLabel" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 48.0
+offset_right = 300.0
+offset_bottom = 72.0
+text = "waiting for impact..."

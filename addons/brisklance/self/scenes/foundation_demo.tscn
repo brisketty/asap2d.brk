@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://addons/brisklance/self/scenes/foundation_demo.gd" id="1"]
+[ext_resource type="PackedScene" path="res://addons/brisklance/self/prefabs/demo_impact_presenter.tscn" id="2"]
+[ext_resource type="Resource" path="res://addons/brisklance/self/assets/theme_profile_complete.tres" id="3"]
+[ext_resource type="Resource" path="res://addons/brisklance/self/assets/theme_profile_sparse.tres" id="4"]
+
+[node name="FoundationDemo" type="Node2D" node_paths=PackedStringArray("node_emit_timer", "node_profile_button", "node_presenter")]
+script = ExtResource("1")
+profile_available = [ExtResource("3"), ExtResource("4")]
+node_emit_timer = NodePath("EmitTimer")
+node_profile_button = NodePath("Ui/ProfileButton")
+node_presenter = NodePath("DemoImpactPresenter")
+
+[node name="EmitTimer" type="Timer" parent="."]
+wait_time = 1.5
+autostart = true
+
+[node name="DemoImpactPresenter" parent="." instance=ExtResource("2")]
+
+[node name="Ui" type="CanvasLayer" parent="."]
+
+[node name="ProfileButton" type="Button" parent="Ui"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 220.0
+offset_bottom = 40.0
+text = "Profile: complete"

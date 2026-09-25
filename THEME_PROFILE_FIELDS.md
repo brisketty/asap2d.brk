@@ -1,20 +1,20 @@
 # ThemeProfile — field-by-field reference
 
-Every exported field on `ThemeProfile` (`scripts/theme_profile.gd`), what it
+Every exported field on `ThemeProfile` (`addons/brisklance/self/scripts/theme_profile.gd`), what it
 holds, and a concrete example. Drop a screenshot under each **Sample visual**
 line as you build real themes — that's what this doc is here to collect.
-Keep the image files under `assets/docs/theme/` (their editable originals go in
+Keep the image files under `addons/brisklance/self/assets/docs/theme/` (their editable originals go in
 `/external/`, per `CLAUDE.md §1`).
 
 - A `ThemeProfile` is **one `.tres` per theme / biome / mood**
-  (`assets/theme_profile_*.tres`). `biome.entered` with
+  (`addons/brisklance/self/assets/theme_profile_*.tres`). `biome.entered` with
   `context.source_id = "forest"` makes the active profile the one whose
   `profile_id` is `&"forest"`, and every subsystem re-themes at once.
 - Assets are looked up by **abstract StringName id** through
   `ThemeManager.resolve_<kind>(id)`. The **id catalogue** — every slot the
   shipped framework resolves — is [`THEME_PROFILE_SLOTS.md`](THEME_PROFILE_SLOTS.md).
   This doc is about the *container fields*, not the ids.
-- **Resolution ladder** (`autoloads/theme_manager.gd` → `resolve_with_ladder`):
+- **Resolution ladder** (`addons/brisklance/self/autoloads/theme_manager.gd` → `resolve_with_ladder`):
   `<kind>_assets[id]` → `default_<kind>` → `ThemeManager.profile_fallback_<kind>`.
   Each downgrade logs once with `printerr`. `resolve_sprite` never returns null
   (`profile_fallback_sprite` is `res://icon.svg`); every other kind can be null
@@ -24,7 +24,7 @@ Keep the image files under `assets/docs/theme/` (their editable originals go in
   auto-call `update_from_<kind>_assets()`, but **mutating one in place**
   (`profile.sprite_assets[id] = tex`) does **not** — reassign the whole dict, or
   call the `update_from_*` method yourself (CLAUDE.md §2E). See
-  `scenes/demo_world.gd` `inject_demo_parallax()` for the reassign pattern.
+  `addons/brisklance/self/scenes/demo_world.gd` `inject_demo_parallax()` for the reassign pattern.
 
 | Field | Type | Holds |
 | --- | --- | --- |
@@ -67,14 +67,14 @@ near), `impact.spark` (sprite variant, foundation demo only). **Missing →**
 
 ```gdscript
 sprite_assets = {
-    &"world.parallax.far":  preload("res://assets/forest/sky.png"),
-    &"world.parallax.mid":  preload("res://assets/forest/trees_back.png"),
-    &"world.parallax.near": preload("res://assets/forest/trees_front.png"),
+    &"world.parallax.far":  preload("res://addons/brisklance/self/assets/forest/sky.png"),
+    &"world.parallax.mid":  preload("res://addons/brisklance/self/assets/forest/trees_back.png"),
+    &"world.parallax.near": preload("res://addons/brisklance/self/assets/forest/trees_front.png"),
 }
-default_sprite = preload("res://assets/forest/trees_back.png")
+default_sprite = preload("res://addons/brisklance/self/assets/forest/trees_back.png")
 ```
 
-Real reference: `scenes/demo_world.gd` builds three tinted `GradientTexture2D`
+Real reference: `addons/brisklance/self/scenes/demo_world.gd` builds three tinted `GradientTexture2D`
 blobs at runtime (far = large/faint, near = small/bright) because the framework
 ships no parallax art.
 
@@ -98,7 +98,7 @@ audio_assets = {
 }
 ```
 
-Real reference: `scenes/demo_sfx.gd` `build_tone_profile()` fills these with
+Real reference: `addons/brisklance/self/scenes/demo_sfx.gd` `build_tone_profile()` fills these with
 `ToneStream.make(freq, seconds)` procedural tones.
 
 > **Sample visual:** _(waveform / spectrogram of each hit tier, or a routing diagram)_
@@ -117,12 +117,12 @@ material.
 
 ```gdscript
 particle_assets = {
-    &"world.ambient": preload("res://assets/forest/pollen.tres"),   # ParticleProcessMaterial
-    &"impact.spark":  preload("res://assets/vfx/leaf_burst.tres"),
+    &"world.ambient": preload("res://addons/brisklance/self/assets/forest/pollen.tres"),   # ParticleProcessMaterial
+    &"impact.spark":  preload("res://addons/brisklance/self/assets/vfx/leaf_burst.tres"),
 }
 ```
 
-Real reference: `assets/particle_cave_ambient.tres` (mapped to `world.ambient`
+Real reference: `addons/brisklance/self/assets/particle_cave_ambient.tres` (mapped to `world.ambient`
 in `theme_profile_cave.tres`; `theme_profile_forest.tres` maps none — the demo's
 "no particles in forest" is intentional).
 
@@ -141,12 +141,12 @@ from "damage feedback" art.
 
 ```gdscript
 shader_assets = {
-    &"world.overlay": preload("res://assets/shader_forest_tint.tres"),
+    &"world.overlay": preload("res://addons/brisklance/self/assets/shader_forest_tint.tres"),
 }
 ```
 
-Real reference: `assets/shader_forest_tint.tres` / `assets/shader_cave_tint.tres`
-(both `ShaderMaterial`s over `assets/shaders/biome_tint.gdshader`).
+Real reference: `addons/brisklance/self/assets/shader_forest_tint.tres` / `addons/brisklance/self/assets/shader_cave_tint.tres`
+(both `ShaderMaterial`s over `addons/brisklance/self/assets/shaders/biome_tint.gdshader`).
 
 > **Sample visual:** _(scene with the overlay on vs off)_
 
@@ -162,14 +162,14 @@ Real reference: `assets/shader_forest_tint.tres` / `assets/shader_cave_tint.tres
 
 ```gdscript
 post_fx_assets = {
-    &"state.hurt":      preload("res://assets/post_fx_hurt_vignette.tres"),
-    &"state.lowhealth": preload("res://assets/grade/lowhealth_pulse.tres"),
-    &"state.paused":    preload("res://assets/grade/pause_blur.tres"),
+    &"state.hurt":      preload("res://addons/brisklance/self/assets/post_fx_hurt_vignette.tres"),
+    &"state.lowhealth": preload("res://addons/brisklance/self/assets/grade/lowhealth_pulse.tres"),
+    &"state.paused":    preload("res://addons/brisklance/self/assets/grade/pause_blur.tres"),
 }
 ```
 
-Real reference: `assets/post_fx_hurt_vignette.tres` (over
-`assets/shaders/hurt_vignette.gdshader`; mapped in `theme_profile_complete.tres`).
+Real reference: `addons/brisklance/self/assets/post_fx_hurt_vignette.tres` (over
+`addons/brisklance/self/assets/shaders/hurt_vignette.gdshader`; mapped in `theme_profile_complete.tres`).
 These are biome-independent — repeat them in every biome profile (see
 `THEME_PROFILE_SLOTS.md` § "Shared vs per-biome slots").
 
@@ -201,7 +201,7 @@ music_assets = {
 }
 ```
 
-Real reference: `scenes/demo_music.gd` `build_score_profile()` —
+Real reference: `addons/brisklance/self/scenes/demo_music.gd` `build_score_profile()` —
 `ToneStream.make(freq, 2.0, gain, true)` looped drones, one per stem.
 
 > **Sample visual:** _(stem stack diagram — which layers play at tension 0 / 0.5 / 1)_
@@ -224,7 +224,7 @@ bus_profile_assets = {
 }
 ```
 
-Real reference: `scenes/demo_mixing.gd` `build_profile()` —
+Real reference: `addons/brisklance/self/scenes/demo_mixing.gd` `build_profile()` —
 `AudioMixingTranslation.make_profile(id, music_db, ambience_db, sfx_db, reverb_room, reverb_wet)`.
 
 > **Sample visual:** _(bar chart of per-bus gain for each profile; reverb settings)_
@@ -242,11 +242,11 @@ map is never wiped).
 
 ```gdscript
 tileset_assets = {
-    &"world.tiles": preload("res://assets/forest/ground.tres"),   # TileSet
+    &"world.tiles": preload("res://addons/brisklance/self/assets/forest/ground.tres"),   # TileSet
 }
 ```
 
-Real reference: `scenes/demo_world.gd` `build_tileset()` builds a one-tile
+Real reference: `addons/brisklance/self/scenes/demo_world.gd` `build_tileset()` builds a one-tile
 `TileSetAtlasSource` over `res://icon.svg` per biome at runtime — the framework
 ships no tiles, which is why `world.tiles` sits on the asset worklist.
 
@@ -268,12 +268,12 @@ them around the four screen edges, so an artist only ever draws one tile.
 
 ```gdscript
 screen_tile_assets = {
-    &"state.hurt":      preload("res://assets/hurt_border_under.tres"),  # ScreenTileSet
-    &"state.hurt.over": preload("res://assets/hurt_border_over.tres"),
+    &"state.hurt":      preload("res://addons/brisklance/self/assets/hurt_border_under.tres"),  # ScreenTileSet
+    &"state.hurt.over": preload("res://addons/brisklance/self/assets/hurt_border_over.tres"),
 }
 ```
 
-Real reference: `scenes/demo_camera.gd` `inject_demo_screen_tiles()` builds two
+Real reference: `addons/brisklance/self/scenes/demo_camera.gd` `inject_demo_screen_tiles()` builds two
 solid-colour `ScreenTileSet`s at runtime (same spirit as `demo_world.gd`'s
 tileset/parallax injection) since the framework ships no border art.
 
@@ -283,6 +283,6 @@ tileset/parallax injection) since the framework ships no border art.
 
 ## Worked full example
 
-See `assets/theme_profile_forest.tres` / `theme_profile_cave.tres` for compact
+See `addons/brisklance/self/assets/theme_profile_forest.tres` / `theme_profile_cave.tres` for compact
 real profiles, and `THEME_PROFILE_SLOTS.md` § "Worked example" for a fully
 populated `forest` profile written out.

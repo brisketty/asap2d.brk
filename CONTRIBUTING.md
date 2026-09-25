@@ -14,11 +14,11 @@ Godot **4.7** headless (`STATE.md` has the binary path). From the repo root:
 for t in test_utility test_event_bus test_theme_manager test_asset_id_scanner \
          test_node_pool test_impact_vfx test_world_environment test_camera_director \
          test_hud_polish test_sfx_player test_music_director test_audio_mixing; do
-  godot --headless --script res://tests/$t.gd
+  godot --headless --script res://addons/brisklance/self/tests/$t.gd
 done
 godot --headless --editor --quit                             # import / global-class check
-godot --headless --script res://scripts/lint_conventions.gd  # $ / get_node / _private lint
-godot --headless --script res://scripts/run_asset_scan.gd    # regenerate the worklist
+godot --headless --script res://addons/brisklance/self/scripts/lint_conventions.gd  # $ / get_node / _private lint
+godot --headless --script res://addons/brisklance/self/scripts/run_asset_scan.gd    # regenerate the worklist
 ```
 
 CI (`.github/workflows/test.yml`) runs all of this on every push and PR, and
@@ -38,10 +38,10 @@ fails on a lint violation or `exports/asset_worklist.md` drift.
 
 ## Adding a subsystem (the shape every one follows)
 
-1. **Pure logic** → `scripts/<name>_translation.gd` (`class_name`, static, **no
+1. **Pure logic** → `addons/brisklance/self/scripts/<name>_translation.gd` (`class_name`, static, **no
    autoload references** — so it unit-tests under `godot --headless --script`).
-   Anything table-shaped is a typed `Resource` (`scripts/<name>_<thing>.gd`).
-2. **Manager** → `autoloads/<name>.gd`, `class_name <Name>Subsystem extends Node`,
+   Anything table-shaped is a typed `Resource` (`addons/brisklance/self/scripts/<name>_<thing>.gd`).
+2. **Manager** → `addons/brisklance/self/autoloads/<name>.gd`, `class_name <Name>Subsystem extends Node`,
    registered in `project.godot` as autoload `<Name>` (after `EventBus` /
    `ThemeManager`). Connects to `EventBus.semantic_event_emitted` in `_ready()`;
    dispatch method `handle_semantic_event_emitted(id, context)`.
@@ -49,7 +49,7 @@ fails on a lint violation or `exports/asset_worklist.md` drift.
    (the `HudPolish` / `SfxPlayer` / `MusicDirector` pattern), not wired via
    `@export` (an autoload can't wire exports). Use `NodePool` for anything
    spawned per event.
-4. **Opt-in components** (things an entity/HUD scene attaches) → `prefabs/`,
+4. **Opt-in components** (things an entity/HUD scene attaches) → `addons/brisklance/self/prefabs/`,
    `class_name`, `static get_packed_scene()`, exported `node_target` +
    `*_source_id`, listen on the bus directly.
 5. **Assets** — a new kind needs: `ThemeProfile` (`<kind>_assets` export +
@@ -58,15 +58,15 @@ fails on a lint violation or `exports/asset_worklist.md` drift.
    two-line `resolve_<kind>` / `has_<kind>` via `resolve_with_ladder`),
    `AssetIdScanner` (`<KIND>_ID_SUFFIX` / `<KIND>_KIND` + a `classify_property`
    branch + an `is_reference_mapped` branch), and a stub method in
-   `tests/test_asset_id_scanner.gd`.
-6. **Event ids** — add `const`s to `scripts/event_ids.gd` and a row to the
+   `addons/brisklance/self/tests/test_asset_id_scanner.gd`.
+6. **Event ids** — add `const`s to `addons/brisklance/self/scripts/event_ids.gd` and a row to the
    registry in `ARCHITECTURE_SPEC.md`. Reference `EventIds.X`, never a literal.
-7. **Demo** → `scenes/demo_<name>.tscn` (+ `.gd`), added to the demo list in
+7. **Demo** → `addons/brisklance/self/scenes/demo_<name>.tscn` (+ `.gd`), added to the demo list in
    `.github/workflows` is not required, but list it in `README.md` / `STATE.md`.
-8. **Test** → `tests/test_<name>.gd`, a `SceneTree` script with the
+8. **Test** → `addons/brisklance/self/tests/test_<name>.gd`, a `SceneTree` script with the
    `expect_*` / `quit(code)` harness (copy an existing one). Cover the
    translation logic; verify Node wiring with a throwaway smoke scene
-   (`godot --headless res://scenes/_smoke_*.tscn`), then delete it.
+   (`godot --headless res://addons/brisklance/self/scenes/_smoke_*.tscn`), then delete it.
 9. **Docs** — spec §, `REMAINING_TASKS.md` (check the boxes, add a dated history
    entry + any follow-ups), `STATE.md`, `README.md`, and — if the subsystem
    resolves a new concrete id — `THEME_PROFILE_SLOTS.md`.

@@ -23,7 +23,7 @@ jobs:
         run: godot --headless --editor --quit
 
       - name: Convention lint
-        run: godot --headless --script res://scripts/lint_conventions.gd
+        run: godot --headless --script res://addons/brisklance/self/scripts/lint_conventions.gd
 
       - name: Run headless test suites
         run: |
@@ -37,7 +37,7 @@ jobs:
           failed=0
           for suite in "${suites[@]}"; do
             echo "::group::$suite"
-            if godot --headless --script "res://tests/$suite.gd"; then
+            if godot --headless --script "res://addons/brisklance/self/tests/$suite.gd"; then
               echo "PASS $suite"
             else
               echo "FAIL $suite"
@@ -49,5 +49,5 @@ jobs:
 
       - name: Regenerate asset worklist and fail on drift
         run: |
-          godot --headless --script res://scripts/run_asset_scan.gd
+          godot --headless --script res://addons/brisklance/self/scripts/run_asset_scan.gd
           git diff --exit-code exports/asset_worklist.md

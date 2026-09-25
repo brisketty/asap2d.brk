@@ -44,7 +44,7 @@ All five phases are **implemented and verified** against Godot 4.7-stable
 
 | Phase | Work | Status |
 | --- | --- | --- |
-| 1 | `BrisklanceSelfUpdater` version core + `tests/test_self_updater.gd` | Done · unit test green |
+| 1 | `BrisklanceSelfUpdater` version core + `addons/brisklance/self/tests/test_self_updater.gd` | Done · unit test green |
 | 2 | Release metadata fetch + `is_update_available` | Done · live GitHub API verified |
 | 3 | Download + stage + validate + swap (`apply_update`) | Done · `install_staged_update` swap + not-newer rejection verified |
 | 4 | Dock notice UI + `BrisklanceInterface` wiring (`brisklance.gd` / `.tscn`) | Done · project imports clean, classes register |
@@ -54,7 +54,7 @@ All five phases are **implemented and verified** against Godot 4.7-stable
 Files changed (committed on the branch):
 
 - `addons/brisklance/manager/scripts/self_updater.gd` (+ `.uid`) — new
-- `tests/test_self_updater.gd` (+ `.uid`) — new
+- `addons/brisklance/self/tests/test_self_updater.gd` (+ `.uid`) — new
 - `addons/brisklance/manager/interface/brisklance/brisklance.gd`
 - `addons/brisklance/manager/interface/brisklance/brisklance.tscn`
 - `addons/brisklance/manager/plugin.cfg` (`1.1.0` → `1.2.3`)
@@ -66,7 +66,7 @@ Files changed (committed on the branch):
 
 ```
 Godot_v4.7-stable_win64_console.exe --headless --import          # clean, BrisklanceSelfUpdater registers
-Godot_v4.7-stable_win64_console.exe --headless --script res://tests/test_self_updater.gd
+Godot_v4.7-stable_win64_console.exe --headless --script res://addons/brisklance/self/tests/test_self_updater.gd
   -> 7/7 "ok:" then "All self-updater tests passed.", exit 0
 ```
 
