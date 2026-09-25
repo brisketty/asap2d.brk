@@ -361,6 +361,107 @@ demo + mixing runtime smoke pass). **Last subsystem — the framework is done.**
 
 ## History
 
+### 2026-09-26 — TileMap Decorator (editor tool, outside the 7-phase framework)
+
+`scripts/tilemap_decorator_translation.gd` (pure edge classification +
+weighted pick + `TileSet` candidate enumeration, unit-tested headless per H1)
++ `prefabs/tilemap_decorator.{gd,tscn}` (`@tool TileMapDecorator`, mask &
+override workflow, expanded past the original 11-layer spec to **19**: paint
+a region + optional manual overrides on 8 per-edge + 1 cover overrider,
+"Prepare Layers"/"Generate Decorations" `@export_tool_button`s auto-build the
+stack and non-destructively regenerate only the 9 `Gen_*` layers) +
+`scenes/demo_tilemap_decorator.{gd,tscn}` (code-built placeholder tiles/
+region/overrides, since painting is editor-only; verified headless via a
+throwaway smoke script — back T10/B10/L6/R6, front T9/B10/L6/R6 (one
+override skipped), cover 59, overrides intact).
+`tests/test_tilemap_decorator.gd` (27 checks). 14 suites green, 9 demos.
+
+- **Editor-time authoring tool, not an EventBus subsystem.** No autoload, no
+  semantic-event wiring, no ThemeProfile/ThemeManager asset-kind integration
+  (decided against — each Gen_* layer's `tile_set` is a plain native
+  `TileMapLayer` property, matching the spec literally rather than adding a
+  10th asset kind for a tool with no runtime presentation role).
+- First use of `@export_tool_button` (Godot 4.4+) in the repo — no prior dock/
+  `EditorPlugin` precedent needed; buttons live directly on the node's
+  inspector, correct for a node type a scene can instance more than once
+  (the Brisklance dock pattern is for singleton, project-wide tools).
+- Layer stacking uses explicit `z_index` per layer (R10's "give it an explicit
+  layer" convention), not scene-tree order — required because Main Terrain is
+  an *external* `TileMapLayer` this prefab doesn't own, sitting in the middle
+  of the stack, so tree order alone can't interleave around it.
+- **Redesign (same day): no ruleset resource at all.** `DecorationRuleset` /
+  `DecorationTileOption` were removed — each Gen_* layer already needs its
+  own `tile_set` to paint with, and Godot tiles already carry a `probability`
+  field (the "Scattering" property in the Tile inspector), so
+  `TilemapDecoratorTranslation.collect_tile_candidates(tileset)` just
+  enumerates every `(source_id, atlas_coords, alternative_id, probability)`
+  in a Gen_* layer's own assigned `TileSet` and weights the pick by each
+  tile's own `probability` — one less config resource to author, and the
+  artist sets scattering weight in the same place they'd set it for manual
+  painting anyway.
+- **Redesign (same day, follow-up): 11 layers → 19, one Gen_/Overrider pair
+  per edge direction.** Dropping the ruleset resource initially also
+  collapsed Horizontal into one shared top+bottom pool and Vertical into one
+  shared left+right pool (matching the spec's own §2.1 grouping, but losing
+  the ability to give a cliff-top and a cliff-bottom distinct art). Since a
+  `TileMapLayer` can only paint from *one* `tile_set`, giving each edge its
+  own tileset requires its own layer pair, not just its own tile pool — so
+  Back/Front Horizontal split into Back/Front Top + Back/Front Bottom, and
+  Back/Front Vertical split into Back/Front Left + Back/Front Right (Cover
+  stays one pair). This is a deliberate departure from the spec's fixed
+  "11 total TileMapLayer nodes" — confirmed with the user before building it.
+  `generate_edge_cell`/`generate_cover_cell`/`write_picked_option` collapsed
+  into one `write_random_tile` reused by all 9 categories (identical pick
+  logic per category now, just a different pool + overrider + gen layer).
+- **Follow-up (same day): sparseness knob + `tileset_*` exports.**
+  `TilemapDecoratorTranslation.should_skip_for_sparseness(sparseness, unit)` —
+  one comparison, kept deliberately independent of the tile-weight math — adds
+  a `sparseness_*` (0..1) export per Gen_* layer for "how often is this cell
+  left empty," so an author never has to make per-tile `probability` values
+  sum to anything to get gaps. Separately, 10 `tileset_*` exports (9
+  categories + RegionDefinition) let "Prepare Layers" sync each into its
+  matching layer(s)' `tile_set` in one pass (`TILESET_ASSIGNMENTS` — a
+  category maps to its Gen_/Overrider pair, RegionDefinition to just itself)
+  instead of dragging the same TileSet onto up to 19 TileMapLayer nodes by
+  hand; a layer whose export is left unset keeps whatever `tile_set` was
+  assigned manually. **Gotcha**: a `Dictionary` `const` entry built with
+  `PackedStringArray([...])` fails to compile ("isn't a constant
+  expression") — a plain array literal (`[...]`) works fine, matching how
+  `LAYER_SPECS` already does it.
+- **Fix (same day): edge decorations were painting inside the region
+  instead of framing it from outside.** `is_top_edge`/etc. correctly
+  identify a boundary *cell of the region*, but generation was writing the
+  decoration onto that same cell — putting a "cliff-top tuft" on the
+  region's last row of ground instead of the empty row above it. Added
+  `TilemapDecoratorTranslation.{top,bottom,left,right}_outside_cell(cell)`
+  (pure, unit-tested) and write the 8 edge categories to that offset cell
+  instead of the boundary cell itself; Cover is unaffected (it's meant to
+  fill the region's own surface). Counts are unchanged for a rectangular
+  region (each boundary cell's outside neighbor is still unique), only cell
+  *position* moved — the demo's manual-override cell moved to match.
+- **Fix (same day): illegible auto-generated layer names.** The actual bug
+  was a name *collision*: hand-authoring a `node_paths=` override on a
+  scene-instance `[node]` line whose targets are extra children added in the
+  parent scene doesn't reliably survive an editor open+save unless the
+  instance also has `[editable path="..."]` at the end of the `.tscn` —
+  without it the editor's own save dropped the override, `prepare_layers()`
+  then saw every `node_*` export as null and created a full second set of
+  layers colliding by name with the first, and `add_child()`'s default
+  `force_readable_name = false` resolved that collision with Godot's
+  anonymous internal unique-name format instead of a readable suffix. Fixed
+  by: reusing an existing same-named child instead of creating a duplicate
+  (`find_child` before `TileMapLayer.new()`), passing
+  `force_readable_name = true` as a defense-in-depth fallback, and adding
+  `[editable path="Decorator"]` to `demo_tilemap_decorator.tscn`.
+- **Follow-up (same day): naming + default visibility.** `LAYER_SPECS` names
+  settled on plain PascalCase for all 11 layers (`GenBackHorizontal`,
+  `BackHorizontalOverrider`, …) rather than the spec table's own spacing —
+  the earlier "illegible" report was actually the collision bug above, not
+  the naming style. `RegionDefinition` now defaults `visible = true` on
+  creation (was `false`) — it's the basis every other layer generates from,
+  so it needs to be seen while painting it; `_ready()` still force-hides it
+  at runtime (not editor) since it's a mask, never meant to render in-game.
+
 ### 2026-09-11 — `THEME_PROFILE_SLOTS.md`
 
 Reference doc cataloguing every concrete id the shipped framework resolves — the
